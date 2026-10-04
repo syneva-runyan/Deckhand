@@ -172,6 +172,7 @@ function matchSpecies(name) {
 // Rough rule-based parse, e.g. "200 lbs king salmon at 14, 50 pounds of halibut for $18". A placeholder for a real model.
 function parseInventory(text) {
   return text
+    .replace(/\b(\d{1,3}) (\d{2})\b(?!\s*(?:lbs?|pounds?))/gi, '$1.$2')
     .split(/,|;|\n|\band\b/i)
     .map((chunk) => {
       const c = chunk.trim();
@@ -293,7 +294,41 @@ function speak(text) {
 function speakReadBack(items) { speak(readBackText(items)); }
 function stopReadBack() { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); }
 
-// Tap once to start, tap again to stop. When speech ends, the read-back appears on its own.
+// Speech recognition writes numbers as words ("two hundred pounds at fourteen"), so turn them into digits.
+const NUM_WORDS = { zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 };
+function wordsToDigits(text) {
+  const words = text.split(/[\s-]+/);
+  const out = [];
+  let total = 0;
+  let last = 0;
+  let run = false;
+  let hundreds = false;
+  const flush = () => { if (run) out.push(String(total)); total = 0; last = 0; run = false; hundreds = false; };
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i].toLowerCase();
+    if (w in NUM_WORDS) {
+      const v = NUM_WORDS[w];
+      // "twenty five" and "one hundred twenty five" are one number; "fourteen fifty" is two.
+      const joins = run && ((last >= 20 && last % 10 === 0 && v < 10) || (hundreds && last >= 100 && v < 100));
+      if (run && !joins) flush();
+      total += v;
+      last = v;
+      run = true;
+    } else if (w === 'hundred' && run) {
+      total *= 100;
+      last = total;
+      hundreds = true;
+    } else if (w === 'and' && run && hundreds && (words[i + 1] || '').toLowerCase() in NUM_WORDS) {
+      last = total;
+    } else {
+      flush();
+      out.push(words[i]);
+    }
+  }
+  flush();
+  return out.join(' ');
+}
+// Tap once to start, tap again to stop. It also stops on its own after a short pause once you have said something.
 function listen() {
   if (!voiceAvailable) return;
   if (listening.value) {
@@ -304,28 +339,42 @@ function listen() {
   micError.value = '';
   if (MOCK_VOICE) { mockListen(); return; }
   const base = invText.value.trim();
+  let finalText = '';
   let heard = '';
+  let silence;
   const rec = new SpeechRec();
   recognizer = rec;
   rec.lang = 'en-US';
   rec.interimResults = true;
   rec.continuous = true;
+  rec.maxAlternatives = 1;
   rec.onstart = () => { listening.value = true; };
   rec.onresult = (e) => {
-    heard = Array.from(e.results).map((r) => r[0].transcript).join(' ').trim();
+    let interim = '';
+    finalText = '';
+    for (const r of Array.from(e.results)) {
+      if (r.isFinal) finalText += `${r[0].transcript} `;
+      else interim += r[0].transcript;
+    }
+    heard = wordsToDigits(`${finalText}${interim}`.replace(/\s+/g, ' ').trim());
     invText.value = `${base} ${heard}`.trim();
+    clearTimeout(silence);
+    silence = setTimeout(() => rec.stop(), 2200);
   };
   rec.onerror = (e) => {
     if (e.error === 'not-allowed' || e.error === 'service-not-allowed') micError.value = 'Microphone access is blocked. Allow it in your browser, or type below.';
     else if (e.error === 'no-speech') micError.value = "We didn't hear anything. Tap the button and try again.";
+    else if (e.error === 'audio-capture') micError.value = "We can't find a microphone. You can type instead.";
+    else if (e.error === 'network') micError.value = 'Speech recognition needs an internet connection. You can type instead.';
     else if (e.error !== 'aborted') micError.value = 'Something went wrong with the microphone. You can type instead.';
   };
   rec.onend = () => {
+    clearTimeout(silence);
     listening.value = false;
     recognizer = null;
     if (heard && !micError.value) review();
   };
-  rec.start();
+  try { rec.start(); } catch { micError.value = 'Could not start the microphone. Try again.'; }
 }
 
 // Website: no direct editing. Changes are requested in words and our team makes them.
@@ -739,3 +788,4 @@ window.addEventListener('popstate', () => {
     </div>
   </div>
 </template>
+

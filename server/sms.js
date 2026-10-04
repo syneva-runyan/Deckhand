@@ -32,6 +32,9 @@ function record(num, body) {
   smsEvents.emit('sms', msg);
 }
 
+// Shows a text on the demo phone only, without sending it anywhere.
+export const showDemoSms = (to, body) => { const num = toE164(to); if (num) record(num, body); };
+
 export async function sendSms(to, body) {
   const num = toE164(to);
   if (!num) return { sent: false, reason: 'no-phone' };

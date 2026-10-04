@@ -651,3 +651,133 @@ a:focus-visible {
     font-size: 10px;
   }
 }
+
+.landing {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+.landing__mark {
+  width: 160px;
+  height: auto;
+}
+.landing__name {
+  font-family: var(--stencil);
+  font-size: clamp(2.5rem, 10vw, 5rem);
+  letter-spacing: 0.06em;
+  margin: 1rem 0 0;
+}
+.landing__tag {
+  color: var(--gold);
+  font-family: var(--stencil);
+  letter-spacing: 0.12em;
+  margin: 0.25rem 0 1.5rem;
+}
+.landing__lede {
+  color: var(--mist);
+  max-width: 32rem;
+  margin: 0 auto 2rem;
+}
+.landing__cta {
+  display: inline-block;
+  background: var(--gold);
+  color: var(--navy);
+  font-weight: 700;
+  padding: 0.8rem 1.6rem;
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+@keyframes fade-in {
+  to { opacity: 1; }
+}
+
+.landing__eyebrow {
+  color: var(--gold);
+  font-family: var(--stencil);
+  letter-spacing: 0.08em;
+  text-align: center;
+  margin: 0 0 0.75rem;
+}
+.landing__headline {
+  font-family: var(--stencil);
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  margin: 0 0 0.75rem;
+}
+.landing__steps, .landing__foot { width: min(100%, 40rem); }
+.landing__steps ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 1rem;
+  text-align: left;
+}
+.landing__steps li {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  column-gap: 1rem;
+  color: var(--mist);
+}
+.landing__steps li strong { color: var(--white); }
+.landing__num {
+  grid-row: span 2;
+  align-self: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--navy);
+  display: grid;
+  place-items: center;
+  font-family: var(--stencil);
+}
+.landing__foot { color: var(--mist); }
+
+html { scroll-behavior: smooth; }
+/* Hero stops short of the fold so the top of "How it works" peeks in. */
+.landing__hero {
+  min-height: calc(100vh - 6rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.landing__steps { padding: 1.5rem 0 4rem; scroll-margin-top: 1rem; }
+.landing__steps .landing__eyebrow { font-size: 1.4rem; }
+.landing__foot { padding-bottom: 3rem; }
+
+.landing { place-items: start center; align-content: start; gap: 0; }
+.landing__steps, .landing__foot { margin: 0 auto; }
+
+/* Whole page fades in on load. */
+.landing { animation: fade-in 1.2s ease both; opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .landing { opacity: 1; animation: none; } }
+
+/* Gold hero, white "How it works" band. */
+.landing { padding: 0; }
+.landing__hero {
+  width: 100%;
+  min-height: calc(100vh - 11rem);
+  padding: 2rem 1rem;
+  background: var(--gold);
+  color: var(--navy);
+}
+.landing__mark { width: min(70vw, 300px); }
+.landing__tag { color: var(--navy); }
+.landing__cta { background: var(--navy); color: var(--gold); }
+.landing__band { width: 100%; background: var(--white); color: var(--ink); padding: 2.5rem 1rem 1rem; }
+.landing__band .landing__steps { margin: 0 auto; padding: 0 0 2rem; }
+.landing__band .landing__eyebrow { color: var(--navy); }
+.landing__band .landing__steps li { color: var(--ink-soft); }
+.landing__band .landing__steps li strong { color: var(--ink); }
+.landing__band .landing__num { background: var(--navy); color: var(--gold); }
+.landing__foot { padding: 2rem 1rem 3rem; margin: 0 auto; text-align: center; }
+
+/* Softer gold for the hero ground, and a quicker fade-in. */
+.landing { animation-duration: 0.5s; }
+.landing__hero { background: #f2b93b; }
+
+.landing__tag { font-size: clamp(1.1rem, 3.8vw, 1.6rem); }

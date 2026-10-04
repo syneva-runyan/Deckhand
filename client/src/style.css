@@ -1162,6 +1162,6 @@ html, body { max-width: 100%; overflow-x: hidden; }
 @keyframes bite-fall { 0% { opacity: 1; transform: translateY(0) rotate(0); } 100% { opacity: 0.9; transform: translateY(105vh) rotate(var(--rot)); } }
 @keyframes bite-pop { 0% { opacity: 0; transform: translate(-50%, 10px) scale(0.9); } 10%, 80% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .bite i { display: none; } }
-.ord__status { appearance: auto; }
+.ord__status { appearance: none; -webkit-appearance: none; padding: 0.5rem 2.4rem 0.5rem 1.1rem; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23102a43' stroke-width='1.6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1.1rem center; }
 .ord__print { font: inherit; font-weight: 600; padding: 0.5rem 1.1rem; border: 1px solid var(--navy); border-radius: 999px; background: var(--white); color: var(--navy); cursor: pointer; }
 .ord__print:hover { background: var(--navy); color: var(--white); }

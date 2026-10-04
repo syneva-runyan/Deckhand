@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { MongoClient } from 'mongodb';
 
-export const ORDER_STATUSES = ['new', 'packing', 'shipped', 'delivered'];
+export const ORDER_STATUSES = ['new', 'shipped', 'delivered'];
 
 // Orders live in the `orders` collection when MONGODB_URI is set. Without it they
 // sit in memory, so local development works with no database installed.

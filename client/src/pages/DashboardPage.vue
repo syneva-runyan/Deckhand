@@ -6,8 +6,7 @@ import { boat, boatError, resetBoat, PORTS, VESSEL_TYPES, METHODS } from '../lib
 
 // Orders placed on the sample store, kept on the server.
 const ORDER_STATUSES = [
-  { key: 'new', label: 'New' },
-  { key: 'packing', label: 'Packing' },
+  { key: 'new', label: 'Waiting confirmation' },
   { key: 'shipped', label: 'Shipped' },
   { key: 'delivered', label: 'Delivered' },
 ];

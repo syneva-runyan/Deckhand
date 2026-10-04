@@ -1165,3 +1165,19 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .ord__status { appearance: none; -webkit-appearance: none; padding: 0.5rem 2.4rem 0.5rem 1.1rem; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23102a43' stroke-width='1.6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1.1rem center; }
 .ord__print { font: inherit; font-weight: 600; padding: 0.5rem 1.1rem; border: 1px solid var(--navy); border-radius: 999px; background: var(--white); color: var(--navy); cursor: pointer; }
 .ord__print:hover { background: var(--navy); color: var(--white); }
+
+/* Small print: the text-alert note on My orders, and the Terms and Privacy pages. */
+.orders__fine { margin: 1rem 0 0; font-size: 0.85rem; line-height: 1.5; color: var(--ink-soft); }
+.orders__fine a, .legal a { color: var(--navy); text-decoration: underline; text-underline-offset: 3px; }
+.landing__legal { margin: 1rem 0 0; font-size: 1rem; }
+.landing__legal a, .legal__foot a { margin: 0 0.6rem; }
+.landing__legal a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.legal { background: var(--white); color: var(--ink); }
+.legal__body { max-width: 40rem; margin: 0 auto; padding: 2.5rem 0 1rem; line-height: 1.6; }
+.legal__body h1 { font-family: var(--stencil); color: var(--navy); margin: 1rem 0 0; }
+.legal__body h2 { font-size: 1.15rem; color: var(--navy); margin: 2rem 0 0.4rem; }
+.legal__body p, .legal__body ul { margin: 0 0 0.8rem; }
+.legal__body ul { padding-left: 1.2rem; }
+.legal__date { color: var(--ink-soft); font-size: 0.9rem; }
+.legal__back a { font-family: var(--stencil); font-size: 1.2rem; text-decoration: none; }
+.legal__foot { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line); text-align: center; }

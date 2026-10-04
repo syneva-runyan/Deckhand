@@ -65,6 +65,7 @@ const offerings = [
     <footer class="landing__foot">
       <p class="landing__headline">More deck. Less desk.</p>
       <p>Built for independent fishermen selling direct.</p>
+      <p class="landing__legal"><a href="/terms">Terms</a> <a href="/privacy">Privacy</a></p>
     </footer>
   </div>
 </template>

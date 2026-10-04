@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 
 import FishMark from '../components/FishMark.vue';
 import { boat, boatError, resetBoat, PORTS, VESSEL_TYPES, METHODS } from '../lib/boat.js';
+import { forgetPhone, phoneSaved, rememberPhone } from '../lib/phone.js';
 
 // Orders placed on the sample store, kept on the server.
 const ORDER_STATUSES = [
@@ -85,10 +86,7 @@ const inventory = ref((() => {
 })());
 watch(inventory, () => localStorage.setItem(INV_KEY, JSON.stringify(inventory.value)), { deep: true });
 
-// Order alerts: kept in the browser and sent to the server, which texts it when an order comes in.
-const syncPhone = (p) => fetch('/api/seller-phone', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: p }) }).catch(() => {});
-const PHONE_KEY = 'deckhand-phone';
-const phoneSaved = ref(localStorage.getItem(PHONE_KEY) || '');
+// Order alerts: the number is held for this browser session only (see lib/phone.js).
 const phone = ref('');
 const phoneError = ref('');
 function savePhone() {
@@ -98,13 +96,9 @@ function savePhone() {
     return;
   }
   phoneError.value = '';
-  phoneSaved.value = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-  localStorage.setItem(PHONE_KEY, phoneSaved.value);
-  syncPhone(phoneSaved.value);
+  rememberPhone(`(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`);
   phone.value = '';
 }
-watch(phoneSaved, (v) => { if (!v) localStorage.removeItem(PHONE_KEY); });
-if (phoneSaved.value) syncPhone(phoneSaved.value);
 
 const invText = ref('');
 // Common options on other independent fishermen's direct-sale sites (Alaska DF&G seller list, Thunder's Catch, Emerald Isle, Kodiak Rush).
@@ -514,13 +508,14 @@ window.addEventListener('popstate', () => {
       <template v-if="current.key === 'orders'">
         <section class="brand__card">
           <h2>Get a text when an order comes in</h2>
-          <p class="brand__note">Enter your mobile number. We'll text you the moment someone orders.</p>
+          <p class="brand__note">Enter your mobile number and we'll text you each time someone orders from Off the Rock while Deckhand is open in this browser.</p>
           <form v-if="!phoneSaved" class="chat__form" @submit.prevent="savePhone">
             <input v-model="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" aria-label="Mobile phone number" />
             <button type="submit">Save</button>
           </form>
-          <p v-else class="orders__phone">Texts go to <strong>{{ phoneSaved }}</strong> <button type="button" class="orders__change" @click="phoneSaved = ''">Change</button></p>
+          <p v-else class="orders__phone">Texts go to <strong>{{ phoneSaved }}</strong> <button type="button" class="orders__change" @click="forgetPhone">Change</button></p>
           <p v-if="phoneError" class="orders__error" role="alert">{{ phoneError }}</p>
+          <p class="orders__fine">We use your number only for these order texts, and we forget it when you close your browser. By saving it you agree to get order alert texts from Deckhand, one for each order. Message and data rates may apply. Reply STOP to stop or HELP for help. <a href="/terms">Terms</a> and <a href="/privacy">Privacy</a>.</p>
         </section>
       </template>
       <template v-if="current.key === 'orders' && shopOrders.length">

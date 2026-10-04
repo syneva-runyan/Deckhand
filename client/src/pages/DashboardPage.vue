@@ -12,18 +12,38 @@ const ORDER_STATUSES = [
   { key: 'delivered', label: 'Delivered' },
 ];
 const shopOrders = ref([]);
+// Celebrate the first order, once.
+const firstBite = ref(false);
+const confetti = Array.from({ length: 28 }, (_, i) => ({
+  left: `${(i * 37) % 100}%`,
+  delay: `${((i * 13) % 10) / 10}s`,
+  dur: `${2.4 + ((i * 7) % 12) / 10}s`,
+  color: ['#f2b93b', '#0f204b', '#e0715a', '#8cc4bc', '#9db7d8'][i % 5],
+  rot: `${(i * 53) % 360}deg`,
+}));
 const loadOrders = async () => {
   try {
     const res = await fetch('/api/shop-orders');
     if (res.ok) shopOrders.value = await res.json();
   } catch { /* server offline */ }
+  if (shopOrders.value.length && !localStorage.getItem('deckhand-first-bite')) {
+    localStorage.setItem('deckhand-first-bite', '1');
+    firstBite.value = true;
+    setTimeout(() => { firstBite.value = false; }, 5000);
+  }
 };
 loadOrders();
-const nextStatus = async (o) => {
-  const i = ORDER_STATUSES.findIndex((s) => s.key === o.status);
-  const next = ORDER_STATUSES[(i + 1) % ORDER_STATUSES.length].key;
-  const res = await fetch(`/api/shop-orders/${o.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: next }) });
-  if (res.ok) o.status = next;
+const setStatus = async (o, status) => {
+  const res = await fetch(`/api/shop-orders/${o.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+  if (res.ok) o.status = status;
+};
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+// Opens a printable label. The sample store doesn't collect a street address yet.
+const printLabel = (o) => {
+  const w = window.open('', '_blank', 'width=520,height=640');
+  if (!w) return;
+  w.document.write(`<!doctype html><title>Label ${esc(o.id)}</title><style>body{font-family:system-ui,sans-serif;margin:0;padding:24px}.l{border:3px solid #000;padding:20px;width:4in}h1{margin:0 0 4px;font-size:14px;letter-spacing:.1em}.to{font-size:22px;font-weight:700;margin:18px 0 4px}.m{font-size:14px;margin:2px 0}.f{border-top:2px dashed #000;margin-top:16px;padding-top:10px;font-size:13px}</style><div class="l"><h1>PERISHABLE - KEEP FROZEN</h1><p class="m">From: Off the Rock, Kodiak, AK</p><p class="to">${esc(o.name)}</p><p class="m">${esc(o.email)}</p><p class="m">[Street address, city, state ZIP]</p><div class="f">Order ${esc(o.id)}<br>${esc(o.lbs)} lb ${esc(o.item)}</div></div><script>window.onload=()=>window.print()<\/script>`);
+  w.document.close();
 };
 const declineOrder = async (o) => {
   if (!window.confirm(`Decline order ${o.id} from ${o.name}? It will be deleted.`)) return;
@@ -510,7 +530,10 @@ window.addEventListener('popstate', () => {
               <small>{{ o.id }} &middot; ${{ Number(o.total).toFixed(2) }}</small>
             </div>
             <div class="ord__actions">
-              <button type="button" class="ord__status" :class="`is-${o.status}`" :title="'Click to move to the next stage'" @click="nextStatus(o)">{{ statusLabel(o) }}</button>
+              <select class="ord__status" :class="`is-${o.status}`" :value="o.status" aria-label="Order status" @change="setStatus(o, $event.target.value)">
+                <option v-for="s in ORDER_STATUSES" :key="s.key" :value="s.key">{{ s.label }}</option>
+              </select>
+              <button type="button" class="ord__print" @click="printLabel(o)">Print postage label</button>
               <button type="button" class="ord__link" @click="contactOrder(o)">Contact</button>
               <button type="button" class="ord__decline" @click="declineOrder(o)">Decline</button>
             </div>
@@ -522,6 +545,11 @@ window.addEventListener('popstate', () => {
         <p>{{ current.empty }}</p>
       </div>
     </main>
+
+    <div v-if="firstBite" class="bite" aria-live="polite">
+      <i v-for="(c, n) in confetti" :key="n" :style="{ left: c.left, animationDelay: c.delay, animationDuration: c.dur, background: c.color, '--rot': c.rot }"></i>
+      <p>Your first bite!</p>
+    </div>
 
     <div v-if="contacting" class="ord__modal" role="dialog" aria-modal="true" aria-label="Message the buyer">
       <form class="ord__card" @submit.prevent="sendDraft">

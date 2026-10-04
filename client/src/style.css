@@ -1154,3 +1154,14 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .ord__hint { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
 .ord__card textarea { box-sizing: border-box; width: 100%; font: inherit; padding: 0.7rem; border: 1px solid var(--line); border-radius: 8px; }
 .ord__row { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; }
+
+/* First order celebration */
+.bite { position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
+.bite i { position: absolute; top: -12px; width: 9px; height: 14px; border-radius: 2px; opacity: 0; animation: bite-fall linear forwards; }
+.bite p { position: absolute; top: 18%; left: 50%; margin: 0; transform: translateX(-50%); padding: 0.7rem 1.6rem; border-radius: 999px; background: var(--navy); color: var(--gold); font-family: var(--stencil); font-size: 1.4rem; letter-spacing: 0.05em; animation: bite-pop 5s ease both; white-space: nowrap; }
+@keyframes bite-fall { 0% { opacity: 1; transform: translateY(0) rotate(0); } 100% { opacity: 0.9; transform: translateY(105vh) rotate(var(--rot)); } }
+@keyframes bite-pop { 0% { opacity: 0; transform: translate(-50%, 10px) scale(0.9); } 10%, 80% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .bite i { display: none; } }
+.ord__status { appearance: auto; }
+.ord__print { font: inherit; font-weight: 600; padding: 0.5rem 1.1rem; border: 1px solid var(--navy); border-radius: 999px; background: var(--white); color: var(--navy); cursor: pointer; }
+.ord__print:hover { background: var(--navy); color: var(--white); }

@@ -1110,7 +1110,24 @@ p.orders__fine { margin: 1rem 0 0; font-size: 0.8rem; line-height: 1.5; color: v
 .inv__sent li { display: grid; gap: 0.15rem; padding-top: 0.6rem; border-top: 1px solid var(--line); }
 .inv__sent span { color: var(--ink-soft); font-size: 0.85rem; }
 
-.inv__label { margin: 0.9rem 0 0.4rem; color: var(--ink-soft); font-size: 0.85rem; }
+.inv__notify { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.9rem; cursor: pointer; font-weight: 600; color: var(--ink); }
+.inv__notify input { width: 1.25rem; height: 1.25rem; accent-color: var(--navy); cursor: pointer; }
+.inv__done { display: grid; justify-items: center; gap: 0.75rem; padding: 2rem 1rem; border-radius: 10px; background: #e3f1e0; }
+.inv__done-mark { display: grid; place-items: center; width: 4rem; height: 4rem; border-radius: 50%; background: #1f5a2a; color: var(--white); font-size: 2rem; }
+.dash__main .inv__done p { margin: 0; min-height: 1.6em; font-size: 1.3rem; font-weight: 700; color: #1f5a2a; text-align: center; }
+.inv__voice { display: grid; justify-items: center; gap: 0.6rem; padding: 1rem 0 1.25rem; }
+.inv__record { position: relative; width: 6.5rem; height: 6.5rem; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--gold); color: var(--navy); cursor: pointer; box-shadow: 0 6px 18px rgba(15, 32, 75, 0.22); transition: transform 0.15s ease; }
+.inv__record:hover { transform: scale(1.04); }
+.inv__record:focus-visible { outline: 3px solid #5b8cff; outline-offset: 4px; }
+.inv__record.is-on { animation: inv-pulse 1.4s ease-out infinite; }
+@keyframes inv-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 182, 18, 0.65); }
+  100% { box-shadow: 0 0 0 1.6rem rgba(255, 182, 18, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .inv__record.is-on { animation: none; box-shadow: 0 0 0 0.5rem rgba(255, 182, 18, 0.4); } .inv__record { transition: none; } }
+.dash__main .inv__voice-label { margin: 0; font-weight: 700; color: var(--navy); text-align: center; }
+.dash__main .inv__voice-error { margin: 0; color: var(--danger); text-align: center; }
+.inv__label { display: block; margin: 0.9rem 0 0.4rem; color: var(--ink-soft); font-size: 0.85rem; }
 .inv__say .inv__chips { margin-bottom: 0; }
 
 .dash__main .dash__lead { font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.35; color: var(--navy); max-width: 36rem; margin: 0.5rem 0 1.5rem; }
@@ -1128,7 +1145,7 @@ p.orders__fine { margin: 1rem 0 0; font-size: 0.8rem; line-height: 1.5; color: v
 .dash__main .boat__btn { justify-self: start; padding: 0.6rem 1.3rem; border: 0; border-radius: 999px; background: #0f204b; color: #fff; cursor: pointer; font: inherit; }
 
 /* ---------- mobile ---------- */
-html, body { max-width: 100%; overflow-x: hidden; }
+html, body { max-width: 100%; overflow-x: clip; }
 .landing { grid-template-columns: minmax(0, 1fr); }
 .landing__hero, .landing__band { box-sizing: border-box; min-width: 0; }
 .landing h1, .landing p { overflow-wrap: anywhere; }

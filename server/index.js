@@ -6,17 +6,74 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 
 import { buildKit } from './kit.js';
+import { createInventoryStore } from './inventory.js';
+import { createSubscribersStore } from './subscribers.js';
 import { createOrdersStore } from './orders.js';
-import { forgetSellerPhone, getSellerPhone, sendSms, setSellerPhone } from './sms.js';
+import { forgetSellerPhone, getSellerPhone, recentSms, sendSms, setSellerPhone, smsEvents } from './sms.js';
 import { carriers, ports, sample, speciesSuggestions, statuses } from './ports.js';
 import { createStore } from './store.js';
 
 const store = createStore();
 const demo = store.seed();
 const shopOrders = await createOrdersStore();
+const inventory = await createInventoryStore();
+const subscribers = await createSubscribersStore();
 
 const app = express();
 app.use(express.json({ limit: '20kb' }));
+
+// Customers sign up on the storefront for a text when new fish is listed.
+app.post('/api/subscribers', async (req, res) => {
+  const { phone, created, error } = await subscribers.add(req.body?.phone);
+  if (error) return res.status(400).json({ error });
+  res.status(created ? 201 : 200).json({ ok: true });
+  if (created) sendSms(phone, "Off the Rock: you're on the list. We'll text you when new fish comes in. Reply STOP to opt out.");
+});
+
+// The seller's inventory. A confirmed addition also fires the INVENTORY_WEBHOOK_URL webhook, if one is set.
+// Texts sent so far, then a live stream of new ones, for the demo phone.
+app.get('/api/sms/stream', (req, res) => {
+  res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive' });
+  res.flushHeaders();
+  recentSms().forEach((m) => res.write(`data: ${JSON.stringify(m)}\n\n`));
+  const onSms = (m) => res.write(`data: ${JSON.stringify(m)}\n\n`);
+  const beat = setInterval(() => res.write(': ping\n\n'), 25000);
+  smsEvents.on('sms', onSms);
+  req.on('close', () => {
+    clearInterval(beat);
+    smsEvents.off('sms', onSms);
+  });
+});
+app.get('/api/inventory', async (req, res) => res.json(await inventory.list()));
+// Live stream for open storefronts: a message each time inventory changes, so they refetch at once.
+app.get('/api/inventory/stream', (req, res) => {
+  res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive' });
+  res.flushHeaders();
+  res.write(': connected\n\n');
+  const onChange = () => res.write('event: inventory\ndata: {}\n\n');
+  const beat = setInterval(() => res.write(': ping\n\n'), 25000);
+  inventory.events.on('change', onChange);
+  req.on('close', () => {
+    clearInterval(beat);
+    inventory.events.off('change', onChange);
+  });
+});
+app.post('/api/inventory', async (req, res) => {
+  const { items, error } = await inventory.save(req.body?.items, {
+    webhook: req.body?.webhook !== false,
+    notifyCustomers: req.body?.notifyCustomers,
+  });
+  if (error) return res.status(400).json({ error });
+  res.status(201).json(items);
+  if (req.body?.notifyCustomers) {
+    const names = items.map((i) => i.name.toLowerCase()).join(', ');
+    subscribers.list().then((phones) => phones.forEach((p) => sendSms(p, `Off the Rock: new fish just landed (${names}). Order direct. Reply STOP to opt out.`)));
+  }
+});
+app.delete('/api/inventory/:name', async (req, res) => {
+  if (!(await inventory.remove(req.params.name))) return res.status(404).json({ error: 'not-found' });
+  res.status(204).end();
+});
 
 // Orders from the Off the Rock sample store, shown on the dashboard's My orders page.
 app.get('/api/shop-orders', async (req, res) => res.json(await shopOrders.list()));

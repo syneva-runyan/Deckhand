@@ -33,7 +33,7 @@ const order = ref(match(saved) ? saved : match(SAMPLE) ? SAMPLE : null);
 </template>
 
 <style scoped>
-.eo { position: relative; min-height: 100vh; overflow-x: hidden; background: #f8eed6; color: #2c3b40; font-family: Lora, Georgia, serif; }
+.eo { position: relative; min-height: 100vh; overflow-x: clip; background: #f8eed6; color: #2c3b40; font-family: Lora, Georgia, serif; }
 .eo__body { position: relative; z-index: 1; max-width: 34rem; margin: 0 auto; padding: 3.5rem 1.75rem 4rem; }
 .eo__body > h1 { margin: 0 0 1rem; }
 .eo__body > p { line-height: 1.6; margin: 0 0 1.75rem; }

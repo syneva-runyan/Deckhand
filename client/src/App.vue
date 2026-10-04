@@ -10,6 +10,7 @@
 //   /terms, /privacy   the small print
 import DashboardPage from './pages/DashboardPage.vue';
 import ExampleStorePage from './pages/ExampleStorePage.vue';
+import DemoPhone from './components/DemoPhone.vue';
 import ExampleOrderPage from './pages/ExampleOrderPage.vue';
 import LandingPage from './pages/LandingPage.vue';
 import LegalPage from './pages/LegalPage.vue';
@@ -18,6 +19,7 @@ import StorePage from './pages/StorePage.vue';
 import { startPhoneSession } from './lib/phone.js';
 
 const path = window.location.pathname;
+const framed = window.self !== window.top;
 const store = path.match(/^\/s\/([a-z0-9-]+)\/?$/);
 const dashboard = /^\/app(\/|$)/.test(path);
 const example = /^\/example\/?$/.test(path);
@@ -29,7 +31,10 @@ startPhoneSession();
 </script>
 
 <template>
-  <ExampleStorePage v-if="example" />
+  <template v-if="example">
+    <ExampleStorePage />
+    <DemoPhone v-if="!framed" />
+  </template>
   <ExampleOrderPage v-else-if="exampleOrder" :id="exampleOrder[1]" />
   <StorePage v-else-if="store" :slug="store[1]" />
   <OrderPage v-else-if="order" :id="order[1]" />

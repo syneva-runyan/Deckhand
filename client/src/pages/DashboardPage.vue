@@ -86,6 +86,25 @@ const inventory = ref((() => {
 })());
 watch(inventory, () => localStorage.setItem(INV_KEY, JSON.stringify(inventory.value)), { deep: true });
 
+// Mongo is the source of truth for the storefront. Hand edits to a row sync quietly, without firing the webhook.
+const rowsForServer = () => inventory.value.filter((r) => r.name).map((r) => ({ name: r.name, lbs: r.lbs, price: r.price }));
+const postInventory = (body) => fetch('/api/inventory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).catch(() => {});
+let syncTimer;
+watch(inventory, () => {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => { const items = rowsForServer(); if (items.length) postInventory({ items, webhook: false }); }, 250);
+}, { deep: true });
+// On load, show what the server holds. If it is empty, send up what this browser already has.
+(async () => {
+  try {
+    const res = await fetch('/api/inventory');
+    if (!res.ok) return;
+    const rows = await res.json();
+    if (rows.length) inventory.value = rows.map((r) => ({ name: r.name, lbs: r.lbs ?? '', price: r.price ?? '' }));
+    else if (inventory.value.length) postInventory({ items: rowsForServer(), webhook: false });
+  } catch { /* server offline */ }
+})();
+
 // Order alerts: the number is held for this browser session only (see lib/phone.js).
 const phone = ref('');
 const phoneError = ref('');
@@ -111,6 +130,45 @@ const pending = ref(null);
 const listening = ref(false);
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 
+// Speech often mishears or shortens names, so map what was said onto the common species list.
+const speciesAliases = [
+  [/\b(king|chinook|spring)\b/, 'King salmon'],
+  [/\b(sockeye|red salmon|reds?)\b/, 'Sockeye'],
+  [/\b(coho|silver|cohoe|koho)\b/, 'Coho'],
+  [/\b(pink|humpy|humpies)\b/, 'Pink salmon'],
+  [/\b(chum|dog salmon|keta)\b/, 'Chum'],
+  [/\b(halibut|hali but|flatfish)\b/, 'Halibut'],
+  [/\b(black cod|sablefish|sable)\b/, 'Black cod'],
+  [/\b(pacific cod|p cod|true cod)\b/, 'Pacific cod'],
+  [/\b(lingcod|ling cod|ling)\b/, 'Lingcod'],
+  [/\b(rockfish|rock fish|snapper)\b/, 'Rockfish'],
+  [/\b(spot prawns?|prawns?|shrimp)\b/, 'Spot prawns'],
+  [/\b(dungeness|dungie|dungeoness)\b/, 'Dungeness crab'],
+  [/\b(king crab|red king)\b/, 'King crab'],
+];
+function editDistance(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+function matchSpecies(name) {
+  const n = name.toLowerCase();
+  if (/\bking\b/.test(n) && /\bcrab\b/.test(n)) return 'King crab';
+  if (/\bblack\b/.test(n) && /\bcod\b/.test(n)) return 'Black cod';
+  if (/\bpacific\b/.test(n) && /\bcod\b/.test(n)) return 'Pacific cod';
+  const hit = speciesAliases.find(([re]) => re.test(n));
+  if (hit) return hit[1];
+  let best = null;
+  let bestScore = Infinity;
+  for (const opt of speciesOptions) {
+    const o = opt.toLowerCase();
+    const score = Math.min(editDistance(n, o), ...o.split(' ').map((w) => editDistance(n, w)));
+    if (score < bestScore) { bestScore = score; best = opt; }
+  }
+  return best && bestScore <= Math.max(2, Math.floor(n.length / 4)) ? best : null;
+}
+
 // Rough rule-based parse, e.g. "200 lbs king salmon at 14, 50 pounds of halibut for $18". A placeholder for a real model.
 function parseInventory(text) {
   return text
@@ -119,7 +177,7 @@ function parseInventory(text) {
       const c = chunk.trim();
       const lbs = c.match(/(\d+(?:\.\d+)?)\s*(?:lbs?|pounds?)\b/i) || c.match(/^(\d+(?:\.\d+)?)\s+(?=[a-z])/i);
       const price = c.match(/(?:at|for|@)\s*\$?\s*(\d+(?:\.\d+)?)/i) || c.match(/\$\s*(\d+(?:\.\d+)?)/);
-      const name = c
+      const heard = c
         .replace(/(\d+(?:\.\d+)?)\s*(?:lbs?|pounds?)\b/i, '')
         .replace(/(?:at|for|@)?\s*\$?\s*\d+(?:\.\d+)?\s*(?:dollars?)?\s*(?:a|per|\/)?\s*(?:lb|pound)?s?\s*$/i, '')
         .replace(/^\s*\d+(?:\.\d+)?\s+/, '')
@@ -127,8 +185,9 @@ function parseInventory(text) {
         .replace(/[^a-z \-]/gi, '')
         .replace(/\s+/g, ' ')
         .trim();
-      if (!name) return null;
-      return { name: name.charAt(0).toUpperCase() + name.slice(1), lbs: lbs ? lbs[1] : '', price: price ? price[1] : '' };
+      if (!heard) return null;
+      const name = matchSpecies(heard) || heard.charAt(0).toUpperCase() + heard.slice(1);
+      return { name, lbs: lbs ? lbs[1] : '', price: price ? price[1] : '' };
     })
     .filter(Boolean);
 }
@@ -136,8 +195,32 @@ function review() {
   const items = parseInventory(invText.value);
   pending.value = items.length ? items : null;
   if (!items.length) invText.value = invText.value.trim();
+  else {
+    textCustomers.value = true;
+    speakReadBack(items);
+  }
+}
+// After "Yes, update" the line is spoken and typed out word by word, then the form comes back.
+const textCustomers = ref(true);
+const confirmLine = ref('');
+const confirmed = ref(false);
+const confirmShown = ref('');
+let confirmTimers = [];
+function clearConfirm() { confirmTimers.forEach(clearTimeout); confirmTimers = []; }
+function showConfirmation() {
+  clearConfirm();
+  confirmed.value = true;
+  confirmShown.value = '';
+  confirmLine.value = textCustomers.value ? "Got it, we'll let your customers know." : 'Got it, your inventory is updated.';
+  speak(confirmLine.value);
+  const words = confirmLine.value.split(' ');
+  words.forEach((_, i) => {
+    confirmTimers.push(setTimeout(() => { confirmShown.value = words.slice(0, i + 1).join(' '); }, i * 320));
+  });
+  confirmTimers.push(setTimeout(() => { confirmed.value = false; }, words.length * 320 + 1600));
 }
 function confirmInventory() {
+  stopReadBack();
   for (const item of pending.value) {
     const row = inventory.value.find((r) => r.name.toLowerCase() === item.name.toLowerCase());
     if (row) {
@@ -145,17 +228,103 @@ function confirmInventory() {
       if (item.price) row.price = item.price;
     } else inventory.value.push({ ...item });
   }
+  const added = pending.value.map((p) => ({ name: p.name, lbs: p.lbs, price: p.price }));
+  // Saved on the server, which fires the inventory webhook. The dashboard still works if the server is offline.
+  fetch('/api/inventory', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items: added, notifyCustomers: textCustomers.value }),
+  }).catch(() => {});
   pending.value = null;
   invText.value = '';
+  showConfirmation();
 }
-function cancelInventory() { pending.value = null; }
+function removeRow(i) {
+  const [gone] = inventory.value.splice(i, 1);
+  if (gone) fetch(`/api/inventory/${encodeURIComponent(gone.name)}`, { method: 'DELETE' }).catch(() => {});
+}
+// "Not quite" throws the read-back away and reopens the mic so the seller can say it again.
+function cancelInventory() {
+  stopReadBack();
+  pending.value = null;
+  invText.value = '';
+  listen();
+}
+const micError = ref('');
+let recognizer = null;
+
+// Prototype: simulate the mic with a canned phrase so the flow works without a microphone.
+// Real speech recognition is used where the browser has it; the mock is only the fallback.
+const MOCK_VOICE = !SpeechRec;
+const voiceAvailable = MOCK_VOICE || !!SpeechRec;
+const mockPhrases = [
+  '200 lbs king salmon at 14, 50 lbs halibut at 18',
+  '80 lbs coho at 11 and 30 lbs black cod at 22',
+  '120 lbs sockeye at 13, 40 lbs lingcod at 9',
+];
+let mockRound = 0;
+let mockTimers = [];
+function clearMock() { mockTimers.forEach(clearTimeout); mockTimers = []; }
+function finishMock() {
+  clearMock();
+  listening.value = false;
+  review();
+}
+function mockListen() {
+  const words = mockPhrases[mockRound++ % mockPhrases.length].split(' ');
+  listening.value = true;
+  invText.value = '';
+  words.forEach((_, i) => {
+    mockTimers.push(setTimeout(() => { invText.value = words.slice(0, i + 1).join(' '); }, 700 + i * 180));
+  });
+  mockTimers.push(setTimeout(finishMock, 700 + words.length * 180 + 600));
+}
+
+// Read the parsed items back out loud as well as on screen.
+function readBackText(items) {
+  const parts = items.map((p) => `${p.lbs ? `${p.lbs} pounds of ` : ''}${p.name.toLowerCase()}${p.price ? ` at ${p.price} dollars a pound` : ''}`);
+  return `Did we get this right? ${parts.join(', and ')}.`;
+}
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+}
+function speakReadBack(items) { speak(readBackText(items)); }
+function stopReadBack() { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); }
+
+// Tap once to start, tap again to stop. When speech ends, the read-back appears on its own.
 function listen() {
-  if (!SpeechRec) return;
+  if (!voiceAvailable) return;
+  if (listening.value) {
+    if (MOCK_VOICE) finishMock();
+    else if (recognizer) recognizer.stop();
+    return;
+  }
+  micError.value = '';
+  if (MOCK_VOICE) { mockListen(); return; }
+  const base = invText.value.trim();
+  let heard = '';
   const rec = new SpeechRec();
+  recognizer = rec;
   rec.lang = 'en-US';
+  rec.interimResults = true;
+  rec.continuous = true;
   rec.onstart = () => { listening.value = true; };
-  rec.onend = () => { listening.value = false; };
-  rec.onresult = (e) => { invText.value = `${invText.value} ${e.results[0][0].transcript}`.trim(); };
+  rec.onresult = (e) => {
+    heard = Array.from(e.results).map((r) => r[0].transcript).join(' ').trim();
+    invText.value = `${base} ${heard}`.trim();
+  };
+  rec.onerror = (e) => {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') micError.value = 'Microphone access is blocked. Allow it in your browser, or type below.';
+    else if (e.error === 'no-speech') micError.value = "We didn't hear anything. Tap the button and try again.";
+    else if (e.error !== 'aborted') micError.value = 'Something went wrong with the microphone. You can type instead.';
+  };
+  rec.onend = () => {
+    listening.value = false;
+    recognizer = null;
+    if (heard && !micError.value) review();
+  };
   rec.start();
 }
 
@@ -390,9 +559,23 @@ window.addEventListener('popstate', () => {
       <template v-if="current.key === 'inventory'">
         <section class="brand__card inv">
           <h2>What did you catch?</h2>
-          <p class="brand__note">Say it or type it, like "200 lbs king salmon at 14, 50 lbs halibut at 18". We'll read it back before anything changes.</p>
-          <form v-if="!pending" class="inv__say" @submit.prevent="review">
-            <textarea v-model="invText" rows="3" placeholder="What do you have today?" aria-label="Describe your inventory" @keydown.enter.exact.prevent="review"></textarea>
+          <p class="brand__note">Tap the button and say it, like "200 lbs king salmon at 14, 50 lbs halibut at 18". We'll read it back before anything changes.</p>
+          <div v-if="confirmed" class="inv__done" role="status">
+            <span class="inv__done-mark" aria-hidden="true">&#10003;</span>
+            <p>{{ confirmShown }}</p>
+          </div>
+          <form v-else-if="!pending" class="inv__say" @submit.prevent="review">
+            <div v-if="voiceAvailable" class="inv__voice">
+              <button type="button" class="inv__record" :class="{ 'is-on': listening }" :aria-pressed="listening" :aria-label="listening ? 'Stop listening' : 'Start listening'" @click="listen">
+                <svg v-if="!listening" viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 11a7 7 0 0 0 14 0" /><path d="M12 18v4" /></svg>
+                <svg v-else viewBox="0 0 24 24" width="32" height="32" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
+              </button>
+              <p class="inv__voice-label" role="status">{{ listening ? 'Listening... tap when you are done' : 'Tap to speak' }}</p>
+              <p v-if="micError" class="inv__voice-error" role="alert">{{ micError }}</p>
+            </div>
+            <p v-else class="brand__note">Your browser can't listen, so type what you have instead.</p>
+            <label class="inv__label" for="inv-text">{{ voiceAvailable ? 'Or type it' : 'What do you have today?' }}</label>
+            <textarea id="inv-text" v-model="invText" rows="3" placeholder="What do you have today?" @keydown.enter.exact.prevent="review"></textarea>
             <p class="inv__label">Commonly sold</p>
             <div class="inv__chips">
               <button v-for="s in speciesOptions" :key="s" type="button" @click="addToText(s)">{{ s }}</button>
@@ -402,7 +585,6 @@ window.addEventListener('popstate', () => {
               <button v-for="f in formOptions" :key="f" type="button" @click="addToText(f.toLowerCase())">{{ f }}</button>
             </div>
             <div class="inv__actions">
-              <button v-if="SpeechRec" type="button" class="inv__mic" :class="{ 'is-on': listening }" @click="listen">{{ listening ? 'Listening...' : 'Speak' }}</button>
               <button type="submit" class="inv__go">Review</button>
             </div>
           </form>
@@ -411,8 +593,12 @@ window.addEventListener('popstate', () => {
             <ul>
               <li v-for="(p, i) in pending" :key="i"><strong>{{ p.name }}</strong> {{ p.lbs ? `${p.lbs} lbs` : 'amount not given' }}{{ p.price ? `, $${p.price}/lb` : '' }}</li>
             </ul>
+            <label class="inv__notify">
+              <input v-model="textCustomers" type="checkbox" />
+              <span>Text my customers</span>
+            </label>
             <div class="inv__actions">
-              <button type="button" class="inv__mic" @click="cancelInventory">Not quite</button>
+              <button type="button" class="inv__mic" @click="cancelInventory">Not quite, say it again</button>
               <button type="button" class="inv__go" @click="confirmInventory">Yes, update</button>
             </div>
           </div>
@@ -421,7 +607,7 @@ window.addEventListener('popstate', () => {
               <strong>{{ r.name }}</strong>
               <label><input v-model="r.lbs" type="number" min="0" inputmode="decimal" placeholder="0" aria-label="Pounds available" /> lbs</label>
               <label>$ <input v-model="r.price" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" aria-label="Price per pound" /> /lb</label>
-              <button class="chat__pencil" type="button" aria-label="Remove" @click="inventory.splice(i, 1)">
+              <button class="chat__pencil" type="button" aria-label="Remove" @click="removeRow(i)">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
               </button>
             </li>

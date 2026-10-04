@@ -19,9 +19,24 @@ const toE164 = (p) => {
   return d.length === 10 ? `+1${d}` : '';
 };
 
+// Every text is also kept here so a demo can show them on an on-screen phone.
+// With DEMO_SMS=1 nothing goes out through Twilio.
+import { EventEmitter } from 'node:events';
+export const smsEvents = new EventEmitter();
+const smsLog = [];
+export const recentSms = () => smsLog.slice();
+function record(num, body) {
+  const msg = { id: `${Date.now()}-${smsLog.length}`, to: `(${num.slice(2, 5)}) ${num.slice(5, 8)}-${num.slice(8)}`, body, at: new Date().toISOString() };
+  smsLog.push(msg);
+  if (smsLog.length > 50) smsLog.shift();
+  smsEvents.emit('sms', msg);
+}
+
 export async function sendSms(to, body) {
   const num = toE164(to);
   if (!num) return { sent: false, reason: 'no-phone' };
+  record(num, body);
+  if (/^(1|true)$/i.test(process.env.DEMO_SMS || '')) return { sent: false, reason: 'demo' };
   const { TWILIO_ACCOUNT_SID: sid, TWILIO_AUTH_TOKEN: token, TWILIO_FROM: smsFrom, TWILIO_WHATSAPP_FROM: waFrom } = process.env;
   // With TWILIO_WHATSAPP_FROM set (Twilio's WhatsApp sandbox is +14155238886), the alert goes over WhatsApp instead of SMS.
   const whatsapp = waFrom ? `whatsapp:${waFrom.replace(/^whatsapp:/, '').trim()}` : '';

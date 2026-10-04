@@ -43,6 +43,7 @@ function pay() {
       lbs: lbs.value,
       total: total.value,
       email: email.value,
+      name: name.value.trim(),
       last4: digits.slice(-4),
     });
   }, 1400);

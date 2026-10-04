@@ -5,14 +5,34 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 
 import { buildKit } from './kit.js';
+import { createOrdersStore } from './orders.js';
 import { carriers, ports, sample, speciesSuggestions, statuses } from './ports.js';
 import { createStore } from './store.js';
 
 const store = createStore();
 const demo = store.seed();
+const shopOrders = await createOrdersStore();
 
 const app = express();
 app.use(express.json({ limit: '20kb' }));
+
+// Orders from the Off the Rock sample store, shown on the dashboard's My orders page.
+app.get('/api/shop-orders', async (req, res) => res.json(await shopOrders.list()));
+app.post('/api/shop-orders', async (req, res) => {
+  const { order, error } = await shopOrders.create(req.body);
+  if (error) return res.status(400).json({ error });
+  res.status(201).json(order);
+});
+app.patch('/api/shop-orders/:id', async (req, res) => {
+  const { order, error } = await shopOrders.setStatus(req.params.id, req.body?.status);
+  if (error === 'not-found') return res.status(404).json({ error });
+  if (error) return res.status(400).json({ error });
+  res.json(order);
+});
+app.delete('/api/shop-orders/:id', async (req, res) => {
+  if (!(await shopOrders.remove(req.params.id))) return res.status(404).json({ error: 'not-found' });
+  res.status(204).end();
+});
 
 const siteUrl = (req, slug) => `${req.protocol}://${req.get('host')}/s/${slug}`;
 

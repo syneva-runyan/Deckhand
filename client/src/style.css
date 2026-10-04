@@ -1133,3 +1133,24 @@ html, body { max-width: 100%; overflow-x: hidden; }
   .chat__form button { width: 100%; }
   .chat__msg { max-width: 100%; }
 }
+
+/* ---------- shop orders ---------- */
+.dash__main .ord { list-style: none; margin: 1.5rem 0 0; padding: 0; display: grid; gap: 0.75rem; max-width: 56rem; }
+.ord__item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.25rem; background: var(--white); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.25rem; }
+.ord__main { display: grid; gap: 0.15rem; min-width: 0; }
+.dash__main .ord__main span { color: var(--ink); }
+.ord__main small { color: var(--ink-soft); }
+.ord__actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.ord__status { font: inherit; font-weight: 700; padding: 0.5rem 1.1rem; border: 0; border-radius: 999px; background: var(--gold); color: var(--navy); cursor: pointer; }
+.ord__status.is-packing { background: #cfe0f5; }
+.ord__status.is-shipped { background: #d3e8d0; }
+.ord__status.is-delivered { background: #e4e4e4; color: var(--ink-soft); }
+.ord__link, .ord__decline { font: inherit; background: none; border: 0; padding: 0.25rem 0; cursor: pointer; text-decoration: underline; }
+.ord__link { color: var(--navy); }
+.ord__decline { color: #a33; }
+.ord__modal { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 1rem; background: rgba(15, 32, 75, 0.55); }
+.ord__card { box-sizing: border-box; width: min(100%, 30rem); display: grid; gap: 0.8rem; background: var(--white); color: var(--ink); border-radius: 14px; padding: 1.5rem; }
+.ord__card h2 { margin: 0; color: var(--navy); }
+.ord__hint { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+.ord__card textarea { box-sizing: border-box; width: 100%; font: inherit; padding: 0.7rem; border: 1px solid var(--line); border-radius: 8px; }
+.ord__row { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; }

@@ -30,6 +30,16 @@ Then open http://localhost:3001.
 
 Run the tests with `npm test`.
 
+### Orders database (MongoDB)
+
+Orders placed on the sample store (`/example`) show up on the dashboard's My orders page. They are stored in an `orders` collection when `MONGODB_URI` is set:
+
+```bash
+MONGODB_URI="mongodb+srv://user:pass@cluster.mongodb.net" npm run dev
+```
+
+`MONGODB_DB` picks the database name and defaults to `deckhand`. Without `MONGODB_URI`, orders are kept in memory and clear on restart. On Railway, add `MONGODB_URI` under the service's Variables.
+
 ## The three pages
 
 | Address | Who it's for | What it does |

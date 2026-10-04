@@ -4,6 +4,47 @@ import { computed, ref, watch } from 'vue';
 import FishMark from '../components/FishMark.vue';
 import { boat, boatError, resetBoat, PORTS, VESSEL_TYPES, METHODS } from '../lib/boat.js';
 
+// Orders placed on the sample store, kept on the server.
+const ORDER_STATUSES = [
+  { key: 'new', label: 'New' },
+  { key: 'packing', label: 'Packing' },
+  { key: 'shipped', label: 'Shipped' },
+  { key: 'delivered', label: 'Delivered' },
+];
+const shopOrders = ref([]);
+const loadOrders = async () => {
+  try {
+    const res = await fetch('/api/shop-orders');
+    if (res.ok) shopOrders.value = await res.json();
+  } catch { /* server offline */ }
+};
+loadOrders();
+const nextStatus = async (o) => {
+  const i = ORDER_STATUSES.findIndex((s) => s.key === o.status);
+  const next = ORDER_STATUSES[(i + 1) % ORDER_STATUSES.length].key;
+  const res = await fetch(`/api/shop-orders/${o.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: next }) });
+  if (res.ok) o.status = next;
+};
+const declineOrder = async (o) => {
+  if (!window.confirm(`Decline order ${o.id} from ${o.name}? It will be deleted.`)) return;
+  const res = await fetch(`/api/shop-orders/${o.id}`, { method: 'DELETE' });
+  if (res.ok) shopOrders.value = shopOrders.value.filter((x) => x.id !== o.id);
+};
+const statusLabel = (o) => ORDER_STATUSES.find((s) => s.key === o.status)?.label || o.status;
+
+// Deckhand drafts the message; the fisherman edits it and sends.
+const contacting = ref(null);
+const msgDraft = ref('');
+const contactOrder = (o) => {
+  contacting.value = o;
+  msgDraft.value = `Hi ${o.name.split(' ')[0]}, thanks for your order of ${o.lbs} lb ${o.item} (${o.id}). It's ${o.status === 'new' ? 'on my list and I will start packing soon' : statusLabel(o).toLowerCase()}. Let me know if you have any questions.`;
+};
+const sendDraft = () => {
+  const o = contacting.value;
+  window.location.href = `mailto:${o.email}?subject=${encodeURIComponent(`Your order ${o.id}`)}&body=${encodeURIComponent(msgDraft.value)}`;
+  contacting.value = null;
+};
+
 const boatMsg = ref('');
 const connectBoat = () => {
   boatMsg.value = boatError();
@@ -460,11 +501,39 @@ window.addEventListener('popstate', () => {
           <p v-if="phoneError" class="orders__error" role="alert">{{ phoneError }}</p>
         </section>
       </template>
-      <div v-if="current.key === 'orders'" class="dash__empty">
+      <template v-if="current.key === 'orders' && shopOrders.length">
+        <ul class="ord">
+          <li v-for="o in shopOrders" :key="o.id" class="ord__item">
+            <div class="ord__main">
+              <strong>{{ o.name }}</strong>
+              <span>{{ o.lbs }} lb {{ o.item }}</span>
+              <small>{{ o.id }} &middot; ${{ Number(o.total).toFixed(2) }}</small>
+            </div>
+            <div class="ord__actions">
+              <button type="button" class="ord__status" :class="`is-${o.status}`" :title="'Click to move to the next stage'" @click="nextStatus(o)">{{ statusLabel(o) }}</button>
+              <button type="button" class="ord__link" @click="contactOrder(o)">Contact</button>
+              <button type="button" class="ord__decline" @click="declineOrder(o)">Decline</button>
+            </div>
+          </li>
+        </ul>
+      </template>
+      <div v-if="current.key === 'orders' && !shopOrders.length" class="dash__empty">
         <FishMark class="dash__swimmer" lively body="#0f204b" accent="#f2b93b" ground="#f4f1ea" />
         <p>{{ current.empty }}</p>
       </div>
     </main>
+
+    <div v-if="contacting" class="ord__modal" role="dialog" aria-modal="true" aria-label="Message the buyer">
+      <form class="ord__card" @submit.prevent="sendDraft">
+        <h2>Message {{ contacting.name }}</h2>
+        <p class="ord__hint">Deckhand drafted this for you. Change anything you like.</p>
+        <textarea v-model="msgDraft" rows="6" aria-label="Message"></textarea>
+        <div class="ord__row">
+          <button type="button" class="ord__link" @click="contacting = null">Cancel</button>
+          <button type="submit" class="boat__btn">Open in email</button>
+        </div>
+      </form>
+    </div>
 
     <div v-if="showWelcome" class="welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
       <form class="welcome__card" @submit.prevent="send">

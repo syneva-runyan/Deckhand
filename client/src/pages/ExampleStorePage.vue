@@ -4,8 +4,16 @@ import FishMark from '../components/FishMark.vue';
 import CheckoutModal from '../components/CheckoutModal.vue';
 
 const buying = ref(null);
-const onPaid = (o) => {
+const onPaid = async (o) => {
   localStorage.setItem('deckhand-example-order', JSON.stringify(o));
+  // Send the order to the fisherman's My orders page. The confirmation still works if the server is down.
+  try {
+    await fetch('/api/shop-orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: o.id, name: o.name, email: o.email, item: o.product.name, lbs: o.lbs, total: o.total }),
+    });
+  } catch { /* ignore */ }
   window.location.assign(`/example/order/${o.id.toLowerCase()}`);
 };
 

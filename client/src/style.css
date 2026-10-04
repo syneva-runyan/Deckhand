@@ -931,6 +931,7 @@ html { scroll-behavior: smooth; }
 .dash__main h1 { font-family: var(--stencil); color: var(--navy); margin: 0 0 0.5rem; }
 .dash__main p { color: var(--ink-soft); max-width: 36rem; font-size: 1.15rem; }
 .dash__empty { margin-top: 2rem; padding: 3rem; border: 2px dashed var(--line); border-radius: 10px; text-align: center; color: var(--ink-soft); }
+p.orders__fine { margin: 1rem 0 0; font-size: 0.8rem; line-height: 1.5; color: var(--ink-soft); }
 @media (max-width: 700px) {
   .dash { grid-template-columns: 1fr; }
   .dash__rail { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 1rem; padding: 1rem; }
@@ -975,31 +976,50 @@ html { scroll-behavior: smooth; }
 .brand__powered strong { color: var(--navy); }
 .brand__powered a { color: var(--navy); font-weight: 600; }
 
-/* ---------- brand chat ---------- */
-.brand__chat { display: grid; gap: 1rem; }
-.chat__log { display: grid; gap: 0.6rem; max-height: 16rem; overflow-y: auto; }
-.chat__msg { margin: 0; padding: 0.7rem 1rem; border-radius: 14px; max-width: 85%; font-size: 1.05rem; line-height: 1.4; }
-.chat__msg--deck { background: #e8ecf5; color: var(--ink); justify-self: start; border-bottom-left-radius: 4px; }
-.chat__msg--you { background: var(--navy); color: var(--white); justify-self: end; border-bottom-right-radius: 4px; }
+/* ---------- brand profile form ---------- */
+.brand__profile { display: grid; gap: 1rem; }
+.brand__profile-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.1rem; max-width: 40rem; }
+.brand__profile-field { display: grid; align-content: start; gap: 0.45rem; min-width: 0; }
+.brand__profile-field span, .brand__notes-form label { color: var(--ink); font-weight: 700; }
+.brand__profile-field input, .brand__notes-row input {
+  width: 100%;
+  min-width: 0;
+  height: 2.75rem;
+  font: inherit;
+  padding: 0 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--white);
+}
+.brand__profile-field input:focus, .brand__notes-row input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(242, 185, 59, 0.25);
+}
+.brand__extra { display: grid; gap: 0.75rem; border-top: 1px solid var(--line); padding-top: 1rem; max-width: 40rem; }
+.brand__extra h3 { color: var(--navy); font-size: 1.05rem; }
+.brand__notes { margin: 0; padding-left: 1.25rem; color: var(--ink); }
+.brand__notes-form { display: grid; gap: 0.45rem; }
+.brand__notes-row { display: flex; gap: 0.5rem; align-items: stretch; }
+.brand__notes-row input { flex: 1; }
+.brand__notes-form button {
+  flex: none;
+  height: 2.75rem;
+  font: inherit;
+  font-weight: 700;
+  padding: 0 1.2rem;
+  border: 0;
+  border-radius: 8px;
+  background: var(--gold);
+  color: var(--navy);
+  cursor: pointer;
+}
 .chat__form { display: flex; gap: 0.5rem; }
 .chat__form input { flex: 1; min-width: 0; font: inherit; font-size: 1.05rem; padding: 0.75rem 1rem; border: 1px solid var(--line); border-radius: 999px; color: var(--ink); background: var(--white); }
 .chat__form input:focus { outline: 2px solid var(--gold); border-color: var(--gold); }
+.ord__card button.boat__btn,
 .chat__form button { font: inherit; font-weight: 700; padding: 0.75rem 1.4rem; border: 0; border-radius: 999px; background: var(--gold); color: var(--navy); cursor: pointer; }
-
-/* Beat `.dash__main p` so bubble text keeps its contrast. */
-.dash__main .chat__msg--you { background: var(--navy); color: var(--white); }
-.dash__main .chat__msg--deck { background: #e8ecf5; color: var(--ink); }
-
-/* Chat grows with the conversation instead of scrolling. */
-.chat__log { max-height: none; overflow: visible; }
-.chat__answer { display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; }
-.chat__answer .chat__msg { justify-self: auto; }
-.chat__pencil { display: grid; place-items: center; width: 2rem; height: 2rem; border: 0; border-radius: 50%; background: transparent; color: var(--ink-soft); cursor: pointer; }
-.chat__pencil:hover { background: #e8ecf5; color: var(--navy); }
-.chat__edit { display: flex; gap: 0.5rem; width: 100%; }
-.chat__edit input { flex: 1; min-width: 0; font: inherit; padding: 0.6rem 0.9rem; border: 1px solid var(--line); border-radius: 999px; }
-.chat__edit input:focus { outline: 2px solid var(--gold); border-color: var(--gold); }
-.chat__edit button { font: inherit; font-weight: 700; padding: 0.6rem 1.1rem; border: 0; border-radius: 999px; background: var(--gold); color: var(--navy); cursor: pointer; }
 
 .brand__tone { background: #fff8e6; border-color: #f2d98a; }
 .tone__traits { list-style: none; margin: 0 0 1rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -1013,13 +1033,12 @@ html { scroll-behavior: smooth; }
 .brand__chat { gap: 0.75rem; }
 .chat__note { justify-self: end; }
 
-/* Softer focus ring on the chat inputs. */
-.chat__form input:focus, .chat__edit input:focus {
-  outline: none;
-  border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(242, 185, 59, 0.25);
-}
-
+.site__preview { max-width: 56rem; }
+.site__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.site__open { font-weight: 700; color: var(--navy); text-underline-offset: 3px; }
+.site__frame { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--paper); }
+.site__frame iframe { display: block; width: 100%; height: 36rem; border: 0; }
+@media (max-width: 480px) { .site__frame iframe { height: 28rem; } }
 .brand__reel { width: 100%; max-width: 40rem; aspect-ratio: 16 / 9; }
 
 /* ---------- welcome modal ---------- */
@@ -1126,12 +1145,13 @@ html, body { max-width: 100%; overflow-x: hidden; }
   .brand__card { padding: 1.1rem; }
   .dash__empty { padding: 1.5rem 1rem; }
 }
-.brand__chat, .chat__log, .chat__form, .chat__answer, .brand__card { min-width: 0; box-sizing: border-box; }
-.brand__chat { grid-template-columns: minmax(0, 1fr); }
+.brand__profile, .brand__profile-form, .brand__notes-form, .chat__form, .brand__card { min-width: 0; box-sizing: border-box; }
 @media (max-width: 480px) {
+  .brand__profile-form { grid-template-columns: minmax(0, 1fr); }
+  .brand__notes-row { flex-wrap: wrap; }
+  .brand__notes-form button { width: 100%; }
   .chat__form { flex-wrap: wrap; }
   .chat__form button { width: 100%; }
-  .chat__msg { max-width: 100%; }
 }
 
 /* ---------- shop orders ---------- */
@@ -1145,6 +1165,7 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .ord__status.is-packing { background: #cfe0f5; }
 .ord__status.is-shipped { background: #d3e8d0; }
 .ord__status.is-delivered { background: #e4e4e4; color: var(--ink-soft); }
+select.ord__status option { background: var(--white); color: var(--ink); }
 .ord__link, .ord__decline { font: inherit; background: none; border: 0; padding: 0.25rem 0; cursor: pointer; text-decoration: underline; }
 .ord__link { color: var(--navy); }
 .ord__decline { color: #a33; }
@@ -1165,3 +1186,18 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .ord__status { appearance: none; -webkit-appearance: none; padding: 0.5rem 2.4rem 0.5rem 1.1rem; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23102a43' stroke-width='1.6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1.1rem center; }
 .ord__print { font: inherit; font-weight: 600; padding: 0.5rem 1.1rem; border: 1px solid var(--navy); border-radius: 999px; background: var(--white); color: var(--navy); cursor: pointer; }
 .ord__print:hover { background: var(--navy); color: var(--white); }
+
+/* Small print: the text-alert note on My orders, and the Terms and Privacy pages. */
+.orders__fine a, .legal a { color: var(--navy); text-decoration: underline; text-underline-offset: 3px; }
+.landing__legal { margin: 1rem 0 0; font-size: 1rem; }
+.landing__legal a, .legal__foot a { margin: 0 0.6rem; }
+.landing__legal a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.legal { background: var(--white); color: var(--ink); }
+.legal__body { max-width: 40rem; margin: 0 auto; padding: 2.5rem 0 1rem; line-height: 1.6; }
+.legal__body h1 { font-family: var(--stencil); color: var(--navy); margin: 1rem 0 0; }
+.legal__body h2 { font-size: 1.15rem; color: var(--navy); margin: 2rem 0 0.4rem; }
+.legal__body p, .legal__body ul { margin: 0 0 0.8rem; }
+.legal__body ul { padding-left: 1.2rem; }
+.legal__date { color: var(--ink-soft); font-size: 0.9rem; }
+.legal__back a { font-family: var(--stencil); font-size: 1.2rem; text-decoration: none; }
+.legal__foot { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line); text-align: center; }

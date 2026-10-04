@@ -3,12 +3,13 @@ import { computed, ref, watch } from 'vue';
 
 import FishMark from '../components/FishMark.vue';
 import { boat, boatError, resetBoat, PORTS, VESSEL_TYPES, METHODS } from '../lib/boat.js';
+import { forgetPhone, phoneSaved, rememberPhone } from '../lib/phone.js';
 
 // Orders placed on the sample store, kept on the server.
 const ORDER_STATUSES = [
   { key: 'new', label: 'Waiting confirmation' },
+  { key: 'new', label: 'Confirmed' },
   { key: 'shipped', label: 'Shipped' },
-  { key: 'delivered', label: 'Delivered' },
 ];
 const shopOrders = ref([]);
 // Celebrate the first order, once.
@@ -85,10 +86,7 @@ const inventory = ref((() => {
 })());
 watch(inventory, () => localStorage.setItem(INV_KEY, JSON.stringify(inventory.value)), { deep: true });
 
-// Order alerts: kept in the browser and sent to the server, which texts it when an order comes in.
-const syncPhone = (p) => fetch('/api/seller-phone', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: p }) }).catch(() => {});
-const PHONE_KEY = 'deckhand-phone';
-const phoneSaved = ref(localStorage.getItem(PHONE_KEY) || '');
+// Order alerts: the number is held for this browser session only (see lib/phone.js).
 const phone = ref('');
 const phoneError = ref('');
 function savePhone() {
@@ -98,13 +96,9 @@ function savePhone() {
     return;
   }
   phoneError.value = '';
-  phoneSaved.value = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-  localStorage.setItem(PHONE_KEY, phoneSaved.value);
-  syncPhone(phoneSaved.value);
+  rememberPhone(`(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`);
   phone.value = '';
 }
-watch(phoneSaved, (v) => { if (!v) localStorage.removeItem(PHONE_KEY); });
-if (phoneSaved.value) syncPhone(phoneSaved.value);
 
 const invText = ref('');
 // Common options on other independent fishermen's direct-sale sites (Alaska DF&G seller list, Thunder's Catch, Emerald Isle, Kodiak Rush).
@@ -200,47 +194,20 @@ const saved = (() => {
 const answers = ref(questions.map((_, i) => (saved.answers && saved.answers[i]) || ''));
 const notes = ref(Array.isArray(saved.notes) ? saved.notes : []);
 const isDev = import.meta.env.DEV;
-const draft = ref('');
-const editing = ref(-1);
-const editDraft = ref('');
+const noteDraft = ref('');
 
 // Index of the next unanswered question; equals questions.length when done.
 const step = computed(() => {
-  const i = answers.value.findIndex((a) => !a);
+  const i = answers.value.findIndex((a) => !a.trim());
   return i === -1 ? questions.length : i;
 });
 const done = computed(() => step.value === questions.length);
 
-// Once the three questions are answered, the box takes anything else worth saying.
-function send() {
-  const text = draft.value.trim();
+function addNote() {
+  const text = noteDraft.value.trim();
   if (!text) return;
-  if (done.value) notes.value.push(text);
-  else answers.value[step.value] = text;
-  draft.value = '';
-  if (done.value && welcome.value) {
-    path.value = '/app/brand';
-    window.history.pushState({}, '', path.value);
-  }
-}
-
-function startEdit(i) {
-  editing.value = i;
-  editDraft.value = answers.value[i];
-}
-
-// Deleting reopens that question in the chat box so it can be answered again.
-function removeAnswer(i) {
-  answers.value[i] = '';
-  welcome.value = false;
-  editing.value = -1;
-  draft.value = '';
-}
-
-function saveEdit() {
-  const text = editDraft.value.trim();
-  if (text) answers.value[editing.value] = text;
-  editing.value = -1;
+  notes.value.push(text);
+  noteDraft.value = '';
 }
 
 // A rough, rule-based read of the answers. A placeholder until a real model is wired in.
@@ -277,8 +244,8 @@ const posts = computed(() => {
   const bang = tone.value.traits.includes('Enthusiastic') ? '!' : '.';
   return [
     ['Mon', `Fresh ${fish} this week from ${biz}. We pulled it in ourselves and froze it within hours. Order direct and it ships to your door${bang}`],
-    ['Wed', `Early start at ${biz}. Cold hands, good fish, nobody in the middle${bang}`],
-    ['Fri', `Last call for this week's ${fish}. Order by tonight and we'll pack it ourselves${bang}`],
+    ['Wed', `Early start at ${biz}. Cold hands, good fish.${bang}`],
+    ['Fri', `Last call for this week's ${fish}. Order by tonight and we'll pack it at sunrise${bang}`],
   ];
 });
 
@@ -351,43 +318,29 @@ window.addEventListener('popstate', () => {
       <h1>{{ current.title }}</h1>
       <p :class="{ dash__lead: current.key === 'website' }">{{ current.text }}</p>
       <template v-if="current.key === 'brand'">
-        <section class="brand__card brand__chat">
+        <section class="brand__card brand__profile">
           <h2>Tell us about you</h2>
+          <p class="brand__note">A few details help us tell your story to buyers. Your answers save automatically.</p>
           <button v-if="isDev" type="button" class="dev__clear" @click="clearAnswers">Clear answers (dev)</button>
-          <div class="chat__log">
-            <template v-for="(q, i) in questions" :key="i">
-              <template v-if="i <= step || answers[i]">
-                <p class="chat__msg chat__msg--deck">{{ q }}</p>
-                <div v-if="answers[i]" class="chat__answer">
-                  <form v-if="editing === i" class="chat__edit" @submit.prevent="saveEdit">
-                    <input v-model="editDraft" type="text" aria-label="Edit your answer" autofocus />
-                    <button type="submit">Save</button>
-                  </form>
-                  <template v-else>
-                    <p class="chat__msg chat__msg--you">{{ answers[i] }}</p>
-                    <button class="chat__pencil" type="button" aria-label="Edit this answer" @click="startEdit(i)">
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
-                    </button>
-                    <button class="chat__pencil" type="button" aria-label="Delete this answer" @click="removeAnswer(i)">
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M6 6l1 14h10l1-14" /><path d="M10 11v5" /><path d="M14 11v5" /></svg>
-                    </button>
-                  </template>
-                </div>
-                <form v-else class="chat__form" @submit.prevent="send">
-                  <input v-model="draft" type="text" placeholder="Type your answer..." aria-label="Your answer" />
-                  <button type="submit">Answer</button>
-                </form>
-              </template>
-            </template>
-          </div>
-          <template v-if="done">
-            <p class="chat__msg chat__msg--deck">Anything else you want buyers to know about your business? Add as much as you like.</p>
-            <p v-for="(n, i) in notes" :key="i" class="chat__msg chat__msg--you chat__note">{{ n }}</p>
-          </template>
-          <form v-if="done" class="chat__form" @submit.prevent="send">
-            <input v-model="draft" type="text" placeholder="Add anything else about your business..." aria-label="Add more about your business" />
-            <button type="submit">Add</button>
+          <form class="brand__profile-form" @submit.prevent>
+            <label v-for="(q, i) in questions" :key="i" class="brand__profile-field">
+              <span>{{ q }}</span>
+              <input v-model="answers[i]" type="text" :autocomplete="i === questions.length - 1 ? 'organization' : 'off'" />
+            </label>
           </form>
+          <div class="brand__extra">
+            <h3>Anything else you'd like to share?</h3>
+            <ul v-if="notes.length" class="brand__notes">
+              <li v-for="(n, i) in notes" :key="i">{{ n }}</li>
+            </ul>
+            <form class="brand__notes-form" @submit.prevent="addNote">
+              <label for="brand-note">Add details about your business</label>
+              <div class="brand__notes-row">
+                <input id="brand-note" v-model="noteDraft" type="text" placeholder="Share anything else you'd like buyers to know" />
+                <button type="submit">Add detail</button>
+              </div>
+            </form>
+          </div>
         </section>
 
         <section v-if="tone" class="brand__card brand__tone">
@@ -418,7 +371,7 @@ window.addEventListener('popstate', () => {
 
         <section class="brand__card brand__powered">
           <strong>Powered by Metricool &amp; Humans</strong>
-          <span>Deckhand offers a social media package. Behind the scenes, we use <a href="https://metricool.com/" target="_blank" rel="noopener">Metricool</a> and a real person to plan, schedule and publish your content, so you never touch a social media dashboard.</span>
+          <span>Deckhand offers a social media package. Behind the scenes, we use <a href="https://metricool.com/" target="_blank" rel="noopener">Metricool</a> and a real person to plan, schedule and publish content for you.</span>
         </section>
       </template>
       <template v-if="current.key === 'inventory'">
@@ -495,10 +448,18 @@ window.addEventListener('popstate', () => {
         </section>
       </template>
       <template v-if="current.key === 'website'">
-        <div class="dash__empty">
-          <FishMark class="dash__swimmer" lively body="#0f204b" accent="#f2b93b" ground="#f4f1ea" />
-          <p>{{ done ? 'Your brand is ready. Your storefront is being built from it.' : 'Once you generate your brand, your storefront will appear here.' }}</p>
-        </div>
+        <section class="brand__card site__preview">
+          <div class="site__head">
+            <div>
+              <h2>Off the Rock</h2>
+              <p class="brand__note">{{ done ? 'Your brand is ready. Your storefront is being built from it. This is a preview.' : 'A preview of your storefront. It will be built from your brand once you tell us about you.' }}</p>
+            </div>
+            <a class="site__open" href="/example" target="_blank" rel="noopener">Open full page</a>
+          </div>
+          <div class="site__frame">
+            <iframe src="/example" title="Preview of the Off the Rock storefront" loading="lazy"></iframe>
+          </div>
+        </section>
         <section class="brand__card">
           <h2>Want something changed?</h2>
           <p class="brand__note">You don't edit the site yourself. Tell us what you'd like different and our team will make it happen.</p>
@@ -514,13 +475,14 @@ window.addEventListener('popstate', () => {
       <template v-if="current.key === 'orders'">
         <section class="brand__card">
           <h2>Get a text when an order comes in</h2>
-          <p class="brand__note">Enter your mobile number. We'll text you the moment someone orders.</p>
+          <p class="brand__note">Enter your mobile number and we'll text you each time someone orders from your business.</p>
           <form v-if="!phoneSaved" class="chat__form" @submit.prevent="savePhone">
             <input v-model="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" aria-label="Mobile phone number" />
             <button type="submit">Save</button>
           </form>
-          <p v-else class="orders__phone">Texts go to <strong>{{ phoneSaved }}</strong> <button type="button" class="orders__change" @click="phoneSaved = ''">Change</button></p>
+          <p v-else class="orders__phone">Texts go to <strong>{{ phoneSaved }}</strong> <button type="button" class="orders__change" @click="forgetPhone">Change</button></p>
           <p v-if="phoneError" class="orders__error" role="alert">{{ phoneError }}</p>
+          <p class="orders__fine">We use your number only for texts about orders. By saving it you agree to get texts from Deckhank. Message and data rates may apply. Reply STOP to stop or HELP for help. <a href="/terms">Terms</a> and <a href="/privacy">Privacy</a>.</p>
         </section>
       </template>
       <template v-if="current.key === 'orders' && shopOrders.length">

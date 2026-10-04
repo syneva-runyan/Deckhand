@@ -154,7 +154,7 @@ const products = [
     <CheckoutModal v-if="buying" :product="buying" @close="buying = null" @paid="onPaid" />
 
     <footer class="ex__foot">
-      <p>Off the Rock. Built with <a class="ex__brand" href="/"><FishMark class="ex__foot-mark" /><span>Deckhand</span></a></p>
+      <p>Off the Rock. Built with <br/><a class="ex__brand" href="/"><FishMark class="ex__foot-mark" /><span>Deckhand</span></a></p>
     </footer>
 
     <svg class="ex__paper" aria-hidden="true"><rect width="100%" height="100%" filter="url(#paper)" /></svg>

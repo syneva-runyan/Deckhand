@@ -104,12 +104,15 @@ The stencil lettering is [Saira Stencil One](https://fonts.google.com/specimen/S
 
 When an Off the Rock order comes in, Deckhand texts the number saved on the My orders page with the order details and a link to print the shipping label (`/label/<order id>`).
 
+The saved number lasts for one browser session. The browser keeps it in `sessionStorage` and re-sends it to the server every minute while a Deckhand page is open. The server holds it in memory only, and drops it when the page closes, when the number is removed, or five minutes after the last re-send. `/terms` and `/privacy` say the same thing in plain words; keep them in step with the code.
+
 Set these environment variables (locally or in Railway):
 
 - `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
 - `TWILIO_FROM` - your Twilio number, e.g. `+15551234567`
 - `PUBLIC_URL` - your site's public URL, so the label link works from a phone
-- `NOTIFY_PHONE` (optional) - fallback number if the server restarts before the dashboard re-sends it
+- `TWILIO_WHATSAPP_FROM` (optional) - send the alert over WhatsApp instead of SMS. For Twilio's WhatsApp sandbox use `+14155238886`; the phone must first send the sandbox's join code to that number in WhatsApp, and the sandbox only delivers for 24 hours after the phone last messaged it
+- `NOTIFY_PHONE` (optional) - the operator's own number, texted when no dashboard is open
 
 Without the Twilio variables, the text is printed to the server log instead. Trial accounts can only text numbers verified in the Twilio console.

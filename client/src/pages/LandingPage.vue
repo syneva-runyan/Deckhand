@@ -18,7 +18,7 @@ function enterApp(event) {
 
 const offerings = [
   ['Your website', 'We build it and take the orders.'],
-  ['Your marketing', 'Free and premium packages. Real people on both, helping you show up as the real you.'],
+  ['Your marketing', 'Free and premium packages. Real humans helping with both.'],
   ['Your shipping', 'We tell you about orders and send labels to print.'],
 ];
 </script>
@@ -65,6 +65,7 @@ const offerings = [
     <footer class="landing__foot">
       <p class="landing__headline">More deck. Less desk.</p>
       <p>Built for independent fishermen selling direct.</p>
+      <p class="landing__legal"><a href="/terms">Terms</a> <a href="/privacy">Privacy</a></p>
     </footer>
   </div>
 </template>

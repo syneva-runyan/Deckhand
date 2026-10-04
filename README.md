@@ -99,3 +99,17 @@ To add a port, add an entry to `ports` with its slogan split into parts and one 
 ## Credits
 
 The stencil lettering is [Saira Stencil One](https://fonts.google.com/specimen/Saira+Stencil+One), used under the SIL Open Font License (see `client/public/fonts/OFL.txt`).
+
+## Text alerts (Twilio)
+
+When an Off the Rock order comes in, Deckhand texts the number saved on the My orders page with the order details and a link to print the shipping label (`/label/<order id>`).
+
+Set these environment variables (locally or in Railway):
+
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_FROM` - your Twilio number, e.g. `+15551234567`
+- `PUBLIC_URL` - your site's public URL, so the label link works from a phone
+- `NOTIFY_PHONE` (optional) - fallback number if the server restarts before the dashboard re-sends it
+
+Without the Twilio variables, the text is printed to the server log instead. Trial accounts can only text numbers verified in the Twilio console.

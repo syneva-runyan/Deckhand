@@ -85,7 +85,8 @@ const inventory = ref((() => {
 })());
 watch(inventory, () => localStorage.setItem(INV_KEY, JSON.stringify(inventory.value)), { deep: true });
 
-// Order alerts: the number is only kept in the browser for now. Nothing is texted yet.
+// Order alerts: kept in the browser and sent to the server, which texts it when an order comes in.
+const syncPhone = (p) => fetch('/api/seller-phone', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: p }) }).catch(() => {});
 const PHONE_KEY = 'deckhand-phone';
 const phoneSaved = ref(localStorage.getItem(PHONE_KEY) || '');
 const phone = ref('');
@@ -99,9 +100,11 @@ function savePhone() {
   phoneError.value = '';
   phoneSaved.value = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
   localStorage.setItem(PHONE_KEY, phoneSaved.value);
+  syncPhone(phoneSaved.value);
   phone.value = '';
 }
 watch(phoneSaved, (v) => { if (!v) localStorage.removeItem(PHONE_KEY); });
+if (phoneSaved.value) syncPhone(phoneSaved.value);
 
 const invText = ref('');
 // Common options on other independent fishermen's direct-sale sites (Alaska DF&G seller list, Thunder's Catch, Emerald Isle, Kodiak Rush).

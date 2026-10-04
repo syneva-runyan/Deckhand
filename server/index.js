@@ -24,8 +24,8 @@ app.post('/api/shop-orders', async (req, res) => {
   const { order, error } = await shopOrders.create(req.body);
   if (error) return res.status(400).json({ error });
   res.status(201).json(order);
-  const base = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
-  sendSms(getSellerPhone(), `Deckhand: new order ${order.id} from ${order.name}. ${order.lbs} lb ${order.item}, $${Number(order.total || 0).toFixed(2)}. Print shipping label: ${base}/label/${encodeURIComponent(order.id)}`);
+  const base = (process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`).replace(/\/+$/, '');
+  sendSms(getSellerPhone(), `Deckhand: new order ${order.id} from ${order.name}. ${order.lbs} lb ${order.item}, $${Number(order.total || 0).toFixed(2)}. Print shipping label: ${base}/label/${encodeURIComponent(order.id)} Reply STOP to opt out.`);
 });
 // Where order texts go. The open dashboard sends its number, and re-sends it every minute.
 app.put('/api/seller-phone', (req, res) => {

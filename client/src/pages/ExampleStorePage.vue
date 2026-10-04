@@ -364,11 +364,11 @@ onBeforeUnmount(() => {
 .ex__catch li.is-out .ex__stock { font-weight: 700; }
 .ex__catch button:disabled { opacity: 0.7; cursor: not-allowed; }
 .ex__restock-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(15, 32, 75, 0.55); }
-.ex__restock { position: relative; width: min(30rem, 100%); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; padding: 1.5rem; background: #fbf1d8; color: #2c3b40; border-top: 5px solid #ffb612; border-radius: 16px; font-family: Lora, Georgia, serif; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35); }
-.ex__restock p { margin: 0; min-width: 0; font-size: 1.3rem; }
+.ex__restock { position: relative; width: min(38rem, 100%); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; padding: 1.5rem; background: #fbf1d8; color: #2c3b40; border-top: 5px solid #ffb612; border-radius: 16px; font-family: Lora, Georgia, serif; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35); }
+.ex__restock p { margin: 0; min-width: 0; font-size: 2rem; line-height: 1.25; }
 .ex__restock p strong { color: #b4533f; }
 .ex__restock-scene { flex: none; width: 14rem; max-width: 100%; height: auto; border-radius: 10px; background: #cfe3df; }
-.ex__restock-go { flex: none; padding: 0.7rem 2rem; font-size: 1.1rem; font: inherit; font-weight: 700; border: 0; border-radius: 999px; background: #d6684f; color: #fbf1d8; cursor: pointer; }
+.ex__restock-go { flex: none; padding: 1.1rem 3.5rem; font-size: 1.6rem; font: inherit; font-weight: 700; border: 0; border-radius: 999px; background: #d6684f; color: #fbf1d8; cursor: pointer; }
 .ex__restock-go:focus-visible, .ex__restock-x:focus-visible { outline: 3px solid #5b8cff; outline-offset: 2px; }
 .ex__restock-x { position: absolute; top: 0.5rem; right: 0.75rem; border: 0; background: none; font-size: 1.5rem; line-height: 1; cursor: pointer; color: #2c3b40; }
 .ex__r-sun { fill: #f3c871; }
@@ -383,6 +383,7 @@ onBeforeUnmount(() => {
 .ex-restock-enter-from, .ex-restock-leave-to { opacity: 0; }
 .ex-restock-enter-from .ex__restock { transform: scale(0.85) translateY(1.5rem); }
 .ex-restock-enter-active .ex__restock { transition: transform 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+@media (max-width: 40rem) { .ex__restock p { font-size: 1.5rem; } .ex__restock-go { padding: 0.9rem 2.5rem; font-size: 1.3rem; } }
 @media (prefers-reduced-motion: reduce) { .ex__r-wave, .ex__r-boat, .ex__r-fish { animation: none; } .ex-restock-enter-active, .ex-restock-leave-active { transition: opacity 0.2s ease; } .ex-restock-enter-from, .ex-restock-leave-to { transform: none; } }
 .ex__empty { margin: 0; padding: 1.5rem; border-radius: 18px; background: rgba(255, 252, 240, 0.62); color: #5d6c6e; font-size: 1.1rem; }
 .ex__catch button { font: inherit; padding: 0.6rem 1.3rem; border: 0; border-radius: 999px; background: rgba(138, 166, 201, 0.35); color: #55667c; }

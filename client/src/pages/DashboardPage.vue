@@ -328,6 +328,20 @@ function wordsToDigits(text) {
   flush();
   return out.join(' ');
 }
+// Drops a phrase that was heard twice in a row ("25 pounds 25 pounds").
+function collapseRepeats(text) {
+  const w = text.split(' ');
+  for (let n = Math.floor(w.length / 2); n >= 1; n--) {
+    for (let i = 0; i + 2 * n <= w.length; i++) {
+      if (w.slice(i, i + n).join(' ').toLowerCase() === w.slice(i + n, i + 2 * n).join(' ').toLowerCase()) {
+        w.splice(i + n, n);
+        return collapseRepeats(w.join(' '));
+      }
+    }
+  }
+  return w.join(' ');
+}
+
 // Tap once to start, tap again to stop. It also stops on its own after a short pause once you have said something.
 function listen() {
   if (!voiceAvailable) return;
@@ -339,24 +353,20 @@ function listen() {
   micError.value = '';
   if (MOCK_VOICE) { mockListen(); return; }
   const base = invText.value.trim();
-  let finalText = '';
   let heard = '';
   let silence;
   const rec = new SpeechRec();
   recognizer = rec;
   rec.lang = 'en-US';
   rec.interimResults = true;
-  rec.continuous = true;
+  // Continuous mode makes Android Chrome repeat earlier words, so listen for a single utterance.
+  rec.continuous = false;
   rec.maxAlternatives = 1;
+  const segments = [];
   rec.onstart = () => { listening.value = true; };
   rec.onresult = (e) => {
-    let interim = '';
-    finalText = '';
-    for (const r of Array.from(e.results)) {
-      if (r.isFinal) finalText += `${r[0].transcript} `;
-      else interim += r[0].transcript;
-    }
-    heard = wordsToDigits(`${finalText}${interim}`.replace(/\s+/g, ' ').trim());
+    for (let i = e.resultIndex; i < e.results.length; i++) segments[i] = e.results[i][0].transcript.trim();
+    heard = collapseRepeats(wordsToDigits(segments.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim()));
     invText.value = `${base} ${heard}`.trim();
     clearTimeout(silence);
     silence = setTimeout(() => rec.stop(), 2200);

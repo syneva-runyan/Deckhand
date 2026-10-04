@@ -22,7 +22,10 @@ const toE164 = (p) => {
 export async function sendSms(to, body) {
   const num = toE164(to);
   if (!num) return { sent: false, reason: 'no-phone' };
-  const { TWILIO_ACCOUNT_SID: sid, TWILIO_AUTH_TOKEN: token, TWILIO_FROM: from } = process.env;
+  const { TWILIO_ACCOUNT_SID: sid, TWILIO_AUTH_TOKEN: token, TWILIO_FROM: smsFrom, TWILIO_WHATSAPP_FROM: waFrom } = process.env;
+  // With TWILIO_WHATSAPP_FROM set (Twilio's WhatsApp sandbox is +14155238886), the alert goes over WhatsApp instead of SMS.
+  const whatsapp = waFrom ? `whatsapp:${waFrom.replace(/^whatsapp:/, '').trim()}` : '';
+  const from = whatsapp || smsFrom;
   if (!sid || !token || !from) {
     console.log(`[sms disabled] to number ending ${num.slice(-2)}: ${body}`);
     return { sent: false, reason: 'not-configured' };
@@ -34,7 +37,7 @@ export async function sendSms(to, body) {
         Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString('base64')}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({ To: num, From: from, Body: body }),
+      body: new URLSearchParams({ To: whatsapp ? `whatsapp:${num}` : num, From: from, Body: body }),
     });
     if (!res.ok) console.error('Twilio error', res.status, await res.text());
     return { sent: res.ok };

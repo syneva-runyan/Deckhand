@@ -17,8 +17,7 @@ const updated = 'October 4, 2026';
         <p>Deckhand is a prototype for independent fishermen who sell direct. It builds a storefront, shows incoming orders and tells the seller when an order arrives. Off the Rock is a sample store. Its checkout takes no payment and nothing is shipped, so please do not type a real card number into it.</p>
 
         <h2>Deckhand order alerts (text messages)</h2>
-        <p>If you save a mobile number on the My orders page, Deckhand texts that number each time someone orders from your business. Each text gives the order details and a link to print the shipping label.</p>
-        <ul>
+        <p>If you save a mobile number on the My orders page, Deckhand texts that number each time someone orders from Off the Rock while Deckhand is open in your browser. Each text gives the order details and a link to print the         shipping label.</p>        <ul>
           <li>You get a confirmation text when you save your number, then one text for each order, so how many you get depends on your orders.</li>
           <li>Message and data rates may apply.</li>
           <li>Reply STOP to stop the texts. Reply HELP for help.</li>

@@ -475,15 +475,14 @@ window.addEventListener('popstate', () => {
       <template v-if="current.key === 'orders'">
         <section class="brand__card">
           <h2>Get a text when an order comes in</h2>
-          <p class="brand__note">Enter your mobile number and we'll text you each time someone orders from your business.</p>
+          <p class="brand__note">Enter your mobile number and we'll text you each time someone orders from Off the Rock while Deckhand is open in this browser.</p>
           <form v-if="!phoneSaved" class="chat__form" @submit.prevent="savePhone">
             <input v-model="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" aria-label="Mobile phone number" />
             <button type="submit">Save</button>
           </form>
           <p v-else class="orders__phone">Texts go to <strong>{{ phoneSaved }}</strong> <button type="button" class="orders__change" @click="forgetPhone">Change</button></p>
           <p v-if="phoneError" class="orders__error" role="alert">{{ phoneError }}</p>
-          <p class="orders__fine">We use your number only for texts about orders. By saving it you agree to get texts from Deckhank. Message and data rates may apply. Reply STOP to stop or HELP for help. <a href="/terms">Terms</a> and <a href="/privacy">Privacy</a>.</p>
-        </section>
+          <p class="orders__fine">We use your number only for these order texts, and we forget it when you close your browser. By saving it you agree to get order alert texts from Deckhand: a confirmation now, then one for each order. Message and data rates may apply. Reply STOP to stop or HELP for help. <a href="/terms">Terms</a> and           <a href="/privacy">Privacy</a>.</p>        </section>
       </template>
       <template v-if="current.key === 'orders' && shopOrders.length">
         <ul class="ord">

@@ -1188,6 +1188,7 @@ select.ord__status option { background: var(--white); color: var(--ink); }
 .ord__print:hover { background: var(--navy); color: var(--white); }
 
 /* Small print: the text-alert note on My orders, and the Terms and Privacy pages. */
+.orders__fine { margin: 1rem 0 0; font-size: 0.85rem; line-height: 1.5; color: var(--ink-soft); }
 .orders__fine a, .legal a { color: var(--navy); text-decoration: underline; text-underline-offset: 3px; }
 .landing__legal { margin: 1rem 0 0; font-size: 1rem; }
 .landing__legal a, .legal__foot a { margin: 0 0.6rem; }

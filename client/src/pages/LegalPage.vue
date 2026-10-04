@@ -19,7 +19,7 @@ const updated = 'October 4, 2026';
         <h2>Deckhand order alerts (text messages)</h2>
         <p>If you save a mobile number on the My orders page, Deckhand texts that number each time someone orders from Off the Rock while Deckhand is open in your browser. Each text gives the order details and a link to print the shipping label.</p>
         <ul>
-          <li>You get one text for each order, so how many you get depends on your orders.</li>
+          <li>You get a confirmation text when you save your number, then one text for each order, so how many you get depends on your orders.</li>
           <li>Message and data rates may apply.</li>
           <li>Reply STOP to stop the texts. Reply HELP for help.</li>
           <li>The texts also stop when you close your browser or remove your number on the My orders page.</li>

@@ -33,6 +33,8 @@ app.put('/api/seller-phone', (req, res) => {
   if (digits.length !== 10) return res.status(400).json({ error: 'invalid' });
   setSellerPhone(digits);
   res.status(204).end();
+  // Only the Save button asks for a confirmation; the once-a-minute re-send does not.
+  if (req.body?.confirm) sendSms(digits, "Deckhand: you're set. We'll message you here each time an order comes in while Deckhand is open in your browser. Reply STOP to opt out.");
 });
 // Sent when the number is removed or the browser closes.
 app.delete('/api/seller-phone', (req, res) => {

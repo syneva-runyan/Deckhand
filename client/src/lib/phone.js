@@ -10,10 +10,11 @@ const read = () => {
 
 export const phoneSaved = ref(read());
 
-const send = () => fetch('/api/seller-phone', {
+// `confirm` asks the server to send a "you're set" message. Only a fresh save does that.
+const send = (confirm = false) => fetch('/api/seller-phone', {
   method: 'PUT',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ phone: phoneSaved.value }),
+  body: JSON.stringify({ phone: phoneSaved.value, confirm }),
   keepalive: true,
 }).catch(() => {});
 const drop = () => fetch('/api/seller-phone', { method: 'DELETE', keepalive: true }).catch(() => {});
@@ -21,7 +22,7 @@ const drop = () => fetch('/api/seller-phone', { method: 'DELETE', keepalive: tru
 export function rememberPhone(pretty) {
   phoneSaved.value = pretty;
   try { sessionStorage.setItem(KEY, pretty); } catch { /* ignore */ }
-  send();
+  send(true);
 }
 
 export function forgetPhone() {

@@ -159,14 +159,23 @@ function matchSpecies(name) {
   if (/\bpacific\b/.test(n) && /\bcod\b/.test(n)) return 'Pacific cod';
   const hit = speciesAliases.find(([re]) => re.test(n));
   if (hit) return hit[1];
+  // Lenient on purpose: anything reasonably close to a listed option snaps to it, only very different names stay as spoken.
+  const generic = new Set(['salmon', 'crab', 'cod', 'fish', 'fillet', 'fillets', 'whole', 'fresh', 'wild']);
+  const heardWords = n.split(' ').filter((w) => w.length > 2 && !generic.has(w));
   let best = null;
-  let bestScore = Infinity;
+  let bestRatio = Infinity;
   for (const opt of speciesOptions) {
     const o = opt.toLowerCase();
-    const score = Math.min(editDistance(n, o), ...o.split(' ').map((w) => editDistance(n, w)));
-    if (score < bestScore) { bestScore = score; best = opt; }
+    const optWords = o.split(' ').filter((w) => !generic.has(w));
+    const candidates = [[n, o], ...heardWords.flatMap((h) => optWords.map((w) => [h, w]))];
+    for (const [h, w] of candidates) {
+      // Shared start or containment ("kings", "halibutt", "sockeyes") counts as a strong match.
+      const close = h.length >= 3 && w.length >= 3 && (h.startsWith(w.slice(0, 3)) || w.startsWith(h.slice(0, 3)) || h.includes(w) || w.includes(h));
+      const ratio = Math.min(editDistance(h, w) / Math.max(h.length, w.length), close ? 0.3 : 1);
+      if (ratio < bestRatio) { bestRatio = ratio; best = opt; }
+    }
   }
-  return best && bestScore <= Math.max(2, Math.floor(n.length / 4)) ? best : null;
+  return best && bestRatio <= 0.6 ? best : null;
 }
 
 // Rough rule-based parse, e.g. "200 lbs king salmon at 14, 50 pounds of halibut for $18". A placeholder for a real model.
@@ -409,13 +418,13 @@ const defaultPosts = [
 
 // Front-end only for now: nothing is sent anywhere yet.
 const questions = [
-  'Tell me about the first time you ever went fishing. Where were you, and who was with you?',
+  "What's the name of your boat?",
   'What is the biggest fish you ever caught?',
   'How do you like to cook your catch?',
   'What is the name of your business?',
 ];
 
-const STORE_KEY = 'deckhand-brand-v3';
+const STORE_KEY = 'deckhand-brand-v4';
 const saved = (() => {
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch { return {}; }
 })();
@@ -630,11 +639,10 @@ window.addEventListener('popstate', () => {
                 <svg v-else viewBox="0 0 24 24" width="32" height="32" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
               </button>
               <p class="inv__voice-label" role="status">{{ listening ? 'Listening... tap when you are done' : 'Tap to speak' }}</p>
+              <p v-if="!listening" class="inv__voice-hint">Tell us what you caught, how much, and the price per pound.</p>
               <p v-if="micError" class="inv__voice-error" role="alert">{{ micError }}</p>
             </div>
             <p v-else class="brand__note">Your browser can't listen, so type what you have instead.</p>
-            <label class="inv__label" for="inv-text">{{ voiceAvailable ? 'Or type it' : 'What do you have today?' }}</label>
-            <textarea id="inv-text" v-model="invText" rows="3" placeholder="What do you have today?" @keydown.enter.exact.prevent="review"></textarea>
             <p class="inv__label">Commonly sold</p>
             <div class="inv__chips">
               <button v-for="s in speciesOptions" :key="s" type="button" @click="addToText(s)">{{ s }}</button>
@@ -643,6 +651,8 @@ window.addEventListener('popstate', () => {
             <div class="inv__chips">
               <button v-for="f in formOptions" :key="f" type="button" @click="addToText(f.toLowerCase())">{{ f }}</button>
             </div>
+            <label class="inv__label" for="inv-text">{{ voiceAvailable ? 'Or type it' : 'What do you have today?' }}</label>
+            <textarea id="inv-text" v-model="invText" rows="3" placeholder="Tell us what you caught, how much, and the price per pound." @keydown.enter.exact.prevent="review"></textarea>
             <div class="inv__actions">
               <button type="submit" class="inv__go">Review</button>
             </div>
@@ -671,7 +681,7 @@ window.addEventListener('popstate', () => {
               </button>
             </li>
           </ul>
-          <p v-else class="brand__note">Nothing listed yet.</p>
+          <p v-else class="brand__note inv__empty">Nothing listed yet.</p>
         </section>
         <section class="brand__card boat">
           <h2>Connect your boat</h2>

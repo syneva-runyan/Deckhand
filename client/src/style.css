@@ -1126,6 +1126,8 @@ p.orders__fine { margin: 1rem 0 0; font-size: 0.8rem; line-height: 1.5; color: v
 }
 @media (prefers-reduced-motion: reduce) { .inv__record.is-on { animation: none; box-shadow: 0 0 0 0.5rem rgba(255, 182, 18, 0.4); } .inv__record { transition: none; } }
 .dash__main .inv__voice-label { margin: 0; font-weight: 700; color: var(--navy); text-align: center; }
+.dash__main .inv__empty { padding-top: 1.75rem; }
+.dash__main .inv__voice-hint { margin: 0; max-width: 24rem; color: var(--navy); opacity: 0.8; text-align: center; font-size: 0.95rem; }
 .dash__main .inv__voice-error { margin: 0; color: var(--danger); text-align: center; }
 .inv__label { display: block; margin: 0.9rem 0 0.4rem; color: var(--ink-soft); font-size: 0.85rem; }
 .inv__say .inv__chips { margin-bottom: 0; }

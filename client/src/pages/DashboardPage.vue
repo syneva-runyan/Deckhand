@@ -195,6 +195,7 @@ const answers = ref(questions.map((_, i) => (saved.answers && saved.answers[i]) 
 const notes = ref(Array.isArray(saved.notes) ? saved.notes : []);
 const isDev = import.meta.env.DEV;
 const noteDraft = ref('');
+const draft = ref('');
 
 // Index of the next unanswered question; equals questions.length when done.
 const step = computed(() => {
@@ -202,6 +203,18 @@ const step = computed(() => {
   return i === -1 ? questions.length : i;
 });
 const done = computed(() => step.value === questions.length);
+
+// The welcome overlay answers one question at a time; the answer lands in the profile form.
+function send() {
+  const text = draft.value.trim();
+  if (!text || done.value) return;
+  answers.value[step.value] = text;
+  draft.value = '';
+  if (done.value && welcome.value) {
+    path.value = '/app/brand';
+    window.history.pushState({}, '', path.value);
+  }
+}
 
 function addNote() {
   const text = noteDraft.value.trim();
@@ -265,8 +278,8 @@ function clearAnswers() {
   localStorage.removeItem(STORE_KEY);
   answers.value = questions.map(() => '');
   notes.value = [];
+  noteDraft.value = '';
   draft.value = '';
-  editing.value = -1;
 }
 
 // Fade in only when arriving from the landing page, not when switching tabs.

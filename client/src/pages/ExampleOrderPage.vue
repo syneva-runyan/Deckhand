@@ -27,7 +27,7 @@ const order = ref(match(saved) ? saved : match(SAMPLE) ? SAMPLE : null);
       <h1>We can't find that order.</h1>
       <p>This is a sample storefront, and orders only live in the browser that placed them.</p>
     </template>
-    <p class="eo__back"><a href="/example">Back to Off the Rock</a></p>
+    <p class="eo__back"><a href="/example">Back to Off the Hook</a></p>
     </main>
   </div>
 </template>

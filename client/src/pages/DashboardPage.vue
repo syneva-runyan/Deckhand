@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 
 import FishMark from '../components/FishMark.vue';
+import OrderTracker from '../components/OrderTracker.vue';
 import { boat, boatError, resetBoat, PORTS, VESSEL_TYPES, METHODS } from '../lib/boat.js';
 import { forgetPhone, phoneSaved, rememberPhone } from '../lib/phone.js';
 
@@ -12,6 +13,8 @@ const ORDER_STATUSES = [
   { key: 'shipped', label: 'Shipped' },
 ];
 const shopOrders = ref([]);
+// The tracker shows the newest order, or a sample id before any order comes in.
+const trackerOrder = computed(() => ({ id: shopOrders.value[0]?.id || 'DH-4821' }));
 // Celebrate the first order, once.
 const firstBite = ref(false);
 const confetti = Array.from({ length: 28 }, (_, i) => ({
@@ -42,7 +45,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 const printLabel = (o) => {
   const w = window.open('', '_blank', 'width=520,height=640');
   if (!w) return;
-  w.document.write(`<!doctype html><title>Label ${esc(o.id)}</title><style>body{font-family:system-ui,sans-serif;margin:0;padding:24px}.l{border:3px solid #000;padding:20px;width:4in}h1{margin:0 0 4px;font-size:14px;letter-spacing:.1em}.to{font-size:22px;font-weight:700;margin:18px 0 4px}.m{font-size:14px;margin:2px 0}.f{border-top:2px dashed #000;margin-top:16px;padding-top:10px;font-size:13px}</style><div class="l"><h1>PERISHABLE - KEEP FROZEN</h1><p class="m">From: Off the Rock, Kodiak, AK</p><p class="to">${esc(o.name)}</p><p class="m">${esc(o.email)}</p><p class="m">[Street address, city, state ZIP]</p><div class="f">Order ${esc(o.id)}<br>${esc(o.lbs)} lb ${esc(o.item)}</div></div><script>window.onload=()=>window.print()<\/script>`);
+  w.document.write(`<!doctype html><title>Label ${esc(o.id)}</title><style>body{font-family:system-ui,sans-serif;margin:0;padding:24px}.l{border:3px solid #000;padding:20px;width:4in}h1{margin:0 0 4px;font-size:14px;letter-spacing:.1em}.to{font-size:22px;font-weight:700;margin:18px 0 4px}.m{font-size:14px;margin:2px 0}.f{border-top:2px dashed #000;margin-top:16px;padding-top:10px;font-size:13px}</style><div class="l"><h1>PERISHABLE - KEEP FROZEN</h1><p class="m">From: Off the Hook, Kodiak, AK</p><p class="to">${esc(o.name)}</p><p class="m">${esc(o.email)}</p><p class="m">[Street address, city, state ZIP]</p><div class="f">Order ${esc(o.id)}<br>${esc(o.lbs)} lb ${esc(o.item)}</div></div><script>window.onload=()=>window.print()<\/script>`);
   w.document.close();
 };
 const declineOrder = async (o) => {
@@ -182,16 +185,20 @@ function matchSpecies(name) {
 function parseInventory(text) {
   return text
     .replace(/\b(\d{1,3}) (\d{2})\b(?!\s*(?:lbs?|pounds?))/gi, '$1.$2')
-    .split(/,|;|\n|\band\b/i)
+    .replace(/(\d),(?=\d{3}\b)/g, '$1')
+    // "and" only separates items when it isn't introducing the price ("... and want it priced at $50/lb").
+    .split(/,|;|\n|(?<=[a-z])\.\s+|\band\b(?!\s+(?:i\s+|we\s+)?(?:want|wanna|would|need|priced?|price|selling|sell|at|for|it|them)\b)/i)
     .map((chunk) => {
       const c = chunk.trim();
       const lbs = c.match(/(\d+(?:\.\d+)?)\s*(?:lbs?|pounds?)\b/i) || c.match(/^(\d+(?:\.\d+)?)\s+(?=[a-z])/i);
       const price = c.match(/(?:at|for|@)\s*\$?\s*(\d+(?:\.\d+)?)/i) || c.match(/\$\s*(\d+(?:\.\d+)?)/);
       const heard = c
         .replace(/(\d+(?:\.\d+)?)\s*(?:lbs?|pounds?)\b/i, '')
-        .replace(/(?:at|for|@)?\s*\$?\s*\d+(?:\.\d+)?\s*(?:dollars?)?\s*(?:a|per|\/)?\s*(?:lb|pound)?s?\s*$/i, '')
+        // Everything from the price phrase on ("and want it priced at $50/lb") is not part of the name.
+        .replace(/\b(?:and\s+)?(?:(?:i|we)\s+)?(?:want|wanna|would like|need)?\s*(?:it|them|that)?\s*(?:to be\s+)?(?:priced?|selling|sell)?\s*(?:at|for|@)?\s*\$?\s*\d+(?:\.\d+)?\s*(?:dollars?|bucks)?\s*(?:a|per|\/)?\s*(?:lb|pound)?s?\b.*$/i, '')
         .replace(/^\s*\d+(?:\.\d+)?\s+/, '')
-        .replace(/\b(of|i have|i've got|got|have|some)\b/gi, '')
+        .replace(/\b(?:(?:i|we)(?:'ve| have)?\s+)?(?:just\s+)?(?:caught|landed|got|have)\b/gi, '')
+        .replace(/\b(of|some|today|and)\b/gi, '')
         .replace(/[^a-z \-]/gi, '')
         .replace(/\s+/g, ' ')
         .trim();
@@ -639,7 +646,7 @@ window.addEventListener('popstate', () => {
                 <svg v-else viewBox="0 0 24 24" width="32" height="32" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
               </button>
               <p class="inv__voice-label" role="status">{{ listening ? 'Listening... tap when you are done' : 'Tap to speak' }}</p>
-              <p v-if="!listening" class="inv__voice-hint">Tell us what you caught, how much, and the price per pound.</p>
+              <p v-if="!listening" class="inv__voice-hint">Tell us what you caught, how much, and the price per pound.<br /><em>For example: "I caught 5000 pounds of sockeye and want it priced at $50 a pound."</em></p>
               <p v-if="micError" class="inv__voice-error" role="alert">{{ micError }}</p>
             </div>
             <p v-else class="brand__note">Your browser can't listen, so type what you have instead.</p>
@@ -652,7 +659,7 @@ window.addEventListener('popstate', () => {
               <button v-for="f in formOptions" :key="f" type="button" @click="addToText(f.toLowerCase())">{{ f }}</button>
             </div>
             <label class="inv__label" for="inv-text">{{ voiceAvailable ? 'Or type it' : 'What do you have today?' }}</label>
-            <textarea id="inv-text" v-model="invText" rows="3" placeholder="Tell us what you caught, how much, and the price per pound." @keydown.enter.exact.prevent="review"></textarea>
+            <textarea id="inv-text" v-model="invText" rows="3" placeholder="Tell us what you caught, how much, and the price per pound.&#10;For example: I caught 5000 lbs of sockeye and want it priced at $50/lb." @keydown.enter.exact.prevent="review"></textarea>
             <div class="inv__actions">
               <button type="submit" class="inv__go">Review</button>
             </div>
@@ -719,13 +726,13 @@ window.addEventListener('popstate', () => {
         <section class="brand__card site__preview">
           <div class="site__head">
             <div>
-              <h2>Off the Rock</h2>
+              <h2>Off the Hook</h2>
               <p class="brand__note">{{ done ? 'Your brand is ready. Your storefront is being built from it. This is a preview.' : 'A preview of your storefront. It will be built from your brand once you tell us about you.' }}</p>
             </div>
             <a class="site__open" href="/example" target="_blank" rel="noopener">Open full page</a>
           </div>
           <div class="site__frame">
-            <iframe src="/example" title="Preview of the Off the Rock storefront" loading="lazy"></iframe>
+            <iframe src="/example" title="Preview of the Off the Hook storefront" loading="lazy"></iframe>
           </div>
         </section>
         <section class="brand__card">
@@ -740,40 +747,45 @@ window.addEventListener('popstate', () => {
           </ul>
         </section>
       </template>
-      <template v-if="current.key === 'orders'">
-        <section class="brand__card">
-          <h2>Get a text when an order comes in</h2>
-          <p class="brand__note">Enter your mobile number and we'll text you each time someone orders from Off the Rock while Deckhand is open in this browser.</p>
-          <form v-if="!phoneSaved" class="chat__form" @submit.prevent="savePhone">
-            <input v-model="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" aria-label="Mobile phone number" />
-            <button type="submit">Save</button>
-          </form>
-          <p v-else class="orders__phone">Texts go to <strong>{{ phoneSaved }}</strong> <button type="button" class="orders__change" @click="forgetPhone">Change</button></p>
-          <p v-if="phoneError" class="orders__error" role="alert">{{ phoneError }}</p>
-          <p class="orders__fine">We use your number only for these order texts, and we forget it when you close your browser. By saving it you agree to get order alert texts from Deckhand: a confirmation now, then one for each order. Message and data rates may apply. Reply STOP to stop or HELP for help. <a href="/terms">Terms</a> and           <a href="/privacy">Privacy</a>.</p>        </section>
-      </template>
-      <template v-if="current.key === 'orders' && shopOrders.length">
-        <ul class="ord">
-          <li v-for="o in shopOrders" :key="o.id" class="ord__item">
-            <div class="ord__main">
-              <strong>{{ o.name }}</strong>
-              <span>{{ o.lbs }} lb {{ o.item }}</span>
-              <small>{{ o.id }} &middot; ${{ Number(o.total).toFixed(2) }}</small>
-            </div>
-            <div class="ord__actions">
-              <select class="ord__status" :class="`is-${o.status}`" :value="o.status" aria-label="Order status" @change="setStatus(o, $event.target.value)">
-                <option v-for="s in ORDER_STATUSES" :key="s.key" :value="s.key">{{ s.label }}</option>
-              </select>
-              <button type="button" class="ord__print" @click="printLabel(o)">Print postage label</button>
-              <button type="button" class="ord__link" @click="contactOrder(o)">Contact</button>
-              <button type="button" class="ord__decline" @click="declineOrder(o)">Decline</button>
-            </div>
-          </li>
-        </ul>
-      </template>
-      <div v-if="current.key === 'orders' && !shopOrders.length" class="dash__empty">
-        <FishMark class="dash__swimmer" lively body="#0f204b" accent="#f2b93b" ground="#f4f1ea" />
-        <p>{{ current.empty }}</p>
+      <div v-if="current.key === 'orders'" class="orders__layout">
+        <div class="orders__col">
+          <section class="brand__card">
+            <h2>Get a text when an order comes in</h2>
+            <p class="brand__note">Enter your mobile number and we'll text you each time someone orders from Off the Hook while Deckhand is open in this browser.</p>
+            <form v-if="!phoneSaved" class="chat__form" @submit.prevent="savePhone">
+              <input v-model="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" aria-label="Mobile phone number" />
+              <button type="submit">Save</button>
+            </form>
+            <p v-else class="orders__phone">Texts go to <strong>{{ phoneSaved }}</strong> <button type="button" class="orders__change" @click="forgetPhone">Change</button></p>
+            <p v-if="phoneError" class="orders__error" role="alert">{{ phoneError }}</p>
+            <p class="orders__fine">We use your number only for these order texts, and we forget it when you close your browser. By saving it you agree to get order alert texts from Deckhand: a confirmation now, then one for each order. Message and data rates may apply. Reply STOP to stop or HELP for help. <a href="/terms">Terms</a> and <a href="/privacy">Privacy</a>.</p>
+          </section>
+          <ul v-if="shopOrders.length" class="ord">
+            <li v-for="o in shopOrders" :key="o.id" class="ord__item">
+              <div class="ord__main">
+                <strong>{{ o.name }}</strong>
+                <span>{{ o.lbs }} lb {{ o.item }}</span>
+                <small>{{ o.id }} &middot; ${{ Number(o.total).toFixed(2) }}</small>
+              </div>
+              <div class="ord__actions">
+                <select class="ord__status" :class="`is-${o.status}`" :value="o.status" aria-label="Order status" @change="setStatus(o, $event.target.value)">
+                  <option v-for="s in ORDER_STATUSES" :key="s.key" :value="s.key">{{ s.label }}</option>
+                </select>
+                <button type="button" class="ord__print" @click="printLabel(o)">Print postage label</button>
+                <button type="button" class="ord__link" @click="contactOrder(o)">Contact</button>
+                <button type="button" class="ord__decline" @click="declineOrder(o)">Decline</button>
+              </div>
+            </li>
+          </ul>
+          <div v-else class="dash__empty">
+            <FishMark class="dash__swimmer" lively body="#0f204b" accent="#f2b93b" ground="#f4f1ea" />
+            <p>{{ current.empty }}</p>
+          </div>
+        </div>
+        <aside class="orders__track" aria-label="What your buyer sees after ordering">
+          <p class="orders__track-label">What your buyer sees</p>
+          <OrderTracker :order="trackerOrder" inline />
+        </aside>
       </div>
     </main>
 

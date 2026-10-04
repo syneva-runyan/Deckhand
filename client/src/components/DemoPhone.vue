@@ -33,7 +33,7 @@ function toggle() {
   <aside class="dp" aria-label="Demo phone showing text messages">
     <div v-if="open" class="dp__phone">
       <div class="dp__notch"></div>
-      <div class="dp__head">Messages <span>Off the Rock</span></div>
+      <div class="dp__head">Messages <span>Off the Hook</span></div>
       <div ref="screen" class="dp__screen" aria-live="polite">
         <p v-if="!messages.length" class="dp__empty">Texts to customers show up here.</p>
         <TransitionGroup name="dp-msg">

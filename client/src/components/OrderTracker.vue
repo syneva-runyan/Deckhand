@@ -1,26 +1,50 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { boat, sampleStatus } from '../lib/boat.js';
 
 const props = defineProps({ order: { type: Object, required: true }, inline: Boolean });
 defineEmits(['close']);
 
-// Hovering a step previews that step in the scene.
-const hover = ref('');
-const scene = computed(() => hover.value || 'water');
-
 // Live when the fisherman has connected a boat, otherwise a labelled sample.
 const live = computed(() => boat.connected);
 const status = computed(() => sampleStatus());
 const out = computed(() => status.value.out);
-const eta = computed(() => (out.value ? '2 days' : '6 hours'));
+
+// The tracker advances on its own, one stage every few seconds, then rests on the last stage and starts over.
+const STAGE_MS = 3500;
+const stage = ref(1);
+let timer;
+let paused = false;
+onMounted(() => {
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) return;
+  timer = setInterval(() => {
+    if (!paused) stage.value = stage.value >= 4 ? 1 : stage.value + 1;
+  }, STAGE_MS);
+});
+onBeforeUnmount(() => clearInterval(timer));
+
+// Hovering a step previews that step in the scene, and holds the progression while it does.
+const hover = ref('');
+const sceneByStage = ['', 'water', 'clean', 'pack', 'ship'];
+const scene = computed(() => hover.value || sceneByStage[stage.value]);
+const headline = computed(() => [
+  '',
+  out.value ? 'The captain is out fishing' : 'The captain is at the dock',
+  'Your fish is being cleaned and frozen',
+  'Your order is being packaged',
+  'Your order is on its way',
+][stage.value]);
+const eta = computed(() => (stage.value === 1 ? (out.value ? '2 days' : '6 hours') : stage.value === 2 ? '1 day' : stage.value === 3 ? '2 hours' : ''));
+const etaLabel = computed(() => (stage.value === 4 ? 'Arriving in about 2 days' : stage.value === 3 ? 'Ships in about 2 hours' : `Packaged in about ${eta.value}`));
+function hold(on) { paused = on; }
 
 const steps = computed(() => [
   { key: 'placed', label: 'Order placed', done: true },
-  { key: 'water', label: out.value ? 'Out fishing' : 'At the dock', done: true, now: true, scene: 'water' },
-  { key: 'clean', label: 'Cleaned and frozen', done: false, scene: 'clean' },
-  { key: 'pack', label: 'Packaged', done: false, scene: 'pack' },
-  { key: 'ship', label: 'On its way', done: false, scene: 'ship' },
+  { key: 'water', label: out.value ? 'Out fishing' : 'At the dock', done: stage.value >= 1, now: stage.value === 1, scene: 'water' },
+  { key: 'clean', label: 'Cleaned and frozen', done: stage.value >= 2, now: stage.value === 2, scene: 'clean' },
+  { key: 'pack', label: 'Packaged', done: stage.value >= 3, now: stage.value === 3, scene: 'pack' },
+  { key: 'ship', label: 'On its way', done: stage.value >= 4, now: stage.value === 4, scene: 'ship' },
 ]);
 </script>
 
@@ -29,10 +53,10 @@ const steps = computed(() => [
     <div class="trk__card">
       <button v-if="!inline" type="button" class="trk__x" aria-label="Close" @click="$emit('close')">&times;</button>
       <p class="trk__id">Order {{ props.order.id }}</p>
-      <h2>{{ out ? 'The captain is out fishing' : 'The captain is at the dock' }}</h2>
-      <p class="trk__eta">Packaged in about <strong>{{ eta }}</strong></p>
+      <h2>{{ headline }}</h2>
+      <p class="trk__eta"><strong>{{ etaLabel }}</strong></p>
 
-      <div class="trk__scene" aria-hidden="true">
+      <div class="trk__scene" aria-hidden="true" @mouseenter="hold(true)" @mouseleave="hold(false)">
         <Transition name="trk-fade" mode="out-in">
           <svg v-if="scene === 'clean'" key="clean" viewBox="0 0 300 90">
             <rect class="trk__ice" x="0" y="0" width="300" height="90" />
@@ -82,7 +106,7 @@ const steps = computed(() => [
       </ul>
 
       <ol class="trk__steps">
-        <li v-for="s in steps" :key="s.key" :class="{ done: s.done, now: s.now, peek: s.scene }" :tabindex="s.scene ? 0 : undefined" @mouseenter="hover = s.scene || ''" @mouseleave="hover = ''" @focus="hover = s.scene || ''" @blur="hover = ''"><span></span>{{ s.label }}</li>
+        <li v-for="s in steps" :key="s.key" :class="{ done: s.done, now: s.now, peek: s.scene }" :tabindex="s.scene ? 0 : undefined" @mouseenter="hover = s.scene || ''; hold(true)" @mouseleave="hover = ''; hold(false)" @focus="hover = s.scene || ''; hold(true)" @blur="hover = ''; hold(false)"><span></span>{{ s.label }}</li>
       </ol>
 
       <p class="trk__note">{{ live ? 'Live from the boat.' : 'Sample status. Connect your boat in Inventory to make this live.' }}</p>
@@ -97,6 +121,7 @@ const steps = computed(() => [
 .trk__id { font-size: 0.8rem; opacity: 0.6; margin: 0; }
 .trk--inline { position: static; display: block; padding: 0; background: none; }
 .trk--inline .trk__card { width: 100%; max-height: none; box-sizing: border-box; background: #fffaf0; }
+.trk--inline .trk__scene { -webkit-mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent); -webkit-mask-composite: initial; mask-composite: initial; }
 .trk h2 { font-family: Pacifico, cursive; font-weight: 400; color: #2f5d5b; margin: 0.2rem 0 0.4rem; font-size: 1.5rem; }
 .trk__eta { margin: 0 0 1rem; }
 .trk__scene { margin: 0 -2.2rem; background: linear-gradient(#cfe3df, #cfe3df); border-radius: 0; overflow: hidden; -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent), linear-gradient(transparent, #000 18%, #000 82%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent), linear-gradient(transparent, #000 18%, #000 82%, transparent); mask-composite: intersect; }

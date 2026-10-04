@@ -14,10 +14,10 @@ const updated = 'October 4, 2026';
         <p class="legal__date">Last updated {{ updated }}</p>
 
         <h2>What Deckhand is</h2>
-        <p>Deckhand is a prototype for independent fishermen who sell direct. It builds a storefront, shows incoming orders and tells the seller when an order arrives. Off the Rock is a sample store. Its checkout takes no payment and nothing is shipped, so please do not type a real card number into it.</p>
+        <p>Deckhand is a prototype for independent fishermen who sell direct. It builds a storefront, shows incoming orders and tells the seller when an order arrives. Off the Hook is a sample store. Its checkout takes no payment and nothing is shipped, so please do not type a real card number into it.</p>
 
         <h2>Deckhand order alerts (text messages)</h2>
-        <p>If you save a mobile number on the My orders page, Deckhand texts that number each time someone orders from Off the Rock while Deckhand is open in your browser. Each text gives the order details and a link to print the         shipping label.</p>        <ul>
+        <p>If you save a mobile number on the My orders page, Deckhand texts that number each time someone orders from Off the Hook while Deckhand is open in your browser. Each text gives the order details and a link to print the         shipping label.</p>        <ul>
           <li>You get a confirmation text when you save your number, then one text for each order, so how many you get depends on your orders.</li>
           <li>Message and data rates may apply.</li>
           <li>Reply STOP to stop the texts. Reply HELP for help.</li>
@@ -39,7 +39,7 @@ const updated = 'October 4, 2026';
         <p class="legal__date">Last updated {{ updated }}</p>
 
         <h2>Your mobile number</h2>
-        <p>If you save a mobile number on the My orders page, we use it only to text you about orders placed on Off the Rock while Deckhand is open in your browser. We do not write it to our database. Your browser holds it until you close the browser, and our server drops it when you close the page or remove the number, and at the latest five minutes after your browser was last open.</p>
+        <p>If you save a mobile number on the My orders page, we use it only to text you about orders placed on Off the Hook while Deckhand is open in your browser. We do not write it to our database. Your browser holds it until you close the browser, and our server drops it when you close the page or remove the number, and at the latest five minutes after your browser was last open.</p>
         <p>We do not share mobile numbers or text messaging consent with third parties or affiliates for marketing or promotional purposes. The texts are delivered by Twilio, which keeps its own delivery records, including the number a text was sent to.</p>
 
         <h2>Orders</h2>

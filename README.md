@@ -102,7 +102,7 @@ The stencil lettering is [Saira Stencil One](https://fonts.google.com/specimen/S
 
 ## Text alerts (Twilio)
 
-When an Off the Rock order comes in, Deckhand texts the number saved on the My orders page with the order details and a link to print the shipping label (`/label/<order id>`).
+When an Off the Hook order comes in, Deckhand texts the number saved on the My orders page with the order details and a link to print the shipping label (`/label/<order id>`).
 
 The saved number lasts for one browser session. The browser keeps it in `sessionStorage` and re-sends it to the server every minute while a Deckhand page is open. The server holds it in memory only, and drops it when the page closes, when the number is removed, or five minutes after the last re-send. `/terms` and `/privacy` say the same thing in plain words; keep them in step with the code.
 

@@ -1103,6 +1103,12 @@ p.orders__fine { margin: 1rem 0 0; font-size: 0.8rem; line-height: 1.5; color: v
 .inv__go { border: 0; background: var(--gold); color: var(--navy); font-weight: 700; }
 .inv__mic { border: 1px solid var(--line); background: var(--white); color: var(--navy); }
 .inv__mic.is-on { background: #e8ecf5; }
+@media (max-width: 40rem) {
+  .inv__actions { flex-direction: column; align-items: stretch; }
+  .inv__actions .inv__go, .inv__actions .inv__mic { width: 100%; padding: 0.9rem 1.4rem; font-size: 1.05rem; text-align: center; }
+  .inv__actions .inv__go { order: 1; }
+  .inv__actions .inv__mic { order: 2; }
+}
 .inv__confirm { background: #f4f6fb; border-radius: 10px; padding: 1rem 1.2rem; }
 .inv__confirm p { margin: 0 0 0.5rem; font-weight: 600; }
 .inv__confirm ul { margin: 0; padding-left: 1.2rem; }
@@ -1175,6 +1181,16 @@ html, body { max-width: 100%; overflow-x: clip; }
 
 /* ---------- shop orders ---------- */
 .dash__main .ord { list-style: none; margin: 1.5rem 0 0; padding: 0; display: grid; gap: 0.75rem; max-width: 56rem; }
+/* Orders on the left and what the buyer sees on the right; on narrow screens the tracker drops below. */
+.dash__main .orders__layout { display: grid; grid-template-columns: minmax(0, 1fr) 30rem; gap: 3.5rem; align-items: start; }
+.dash__main:has(.orders__layout) { max-width: 84rem; }
+.dash__main .orders__col .brand__card { max-width: none; }
+.dash__main .orders__col .brand__card .brand__note, .dash__main .orders__col p.orders__fine { max-width: none; }
+.dash__main .orders__track .trk h2 { font-size: 1.35rem; }
+.dash__main .orders__col { min-width: 0; }
+.dash__main .orders__track { position: sticky; top: 1.5rem; }
+.dash__main .orders__track-label { margin: 0 0 1.1rem; font-weight: 700; color: var(--navy); font-size: 0.95rem; }
+@media (max-width: 64rem) { .dash__main .orders__layout { grid-template-columns: minmax(0, 1fr); gap: 2.5rem; } .dash__main .orders__track { position: static; max-width: 30rem; } }
 .ord__item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.25rem; background: var(--white); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.25rem; }
 .ord__main { display: grid; gap: 0.15rem; min-width: 0; }
 .dash__main .ord__main span { color: var(--ink); }

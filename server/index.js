@@ -27,7 +27,7 @@ app.post('/api/subscribers', async (req, res) => {
   const { phone, created, error } = await subscribers.add(req.body?.phone);
   if (error) return res.status(400).json({ error });
   res.status(created ? 201 : 200).json({ ok: true });
-  if (created) sendSms(phone, "Off the Rock: you're on the list. We'll text you when new fish comes in. Reply STOP to opt out.");
+  if (created) sendSms(phone, "Off the Hook: you're on the list. We'll text you when new fish comes in. Reply STOP to opt out.");
 });
 
 // The seller's inventory. A confirmed addition also fires the INVENTORY_WEBHOOK_URL webhook, if one is set.
@@ -68,7 +68,7 @@ app.post('/api/inventory', async (req, res) => {
   if (req.body?.notifyCustomers) {
     const names = items.filter((i) => Number(i.lbs) > 0).map((i) => i.name).join(', ') || items.map((i) => i.name).join(', ');
     const base = (process.env.PUBLIC_URL || req.get('origin') || `${req.protocol}://${req.get('host')}`).replace(/\/+$/, '');
-    const text = `Off the Rock: fresh catch just in, ${names}. Tap to order direct: ${base}/example Reply STOP to opt out.`;
+    const text = `Off the Hook: fresh catch just in, ${names}. Tap to order direct: ${base}/example Reply STOP to opt out.`;
     subscribers.list().then((phones) => {
       phones.forEach((p) => sendSms(p, text));
       // With nobody signed up yet, still show the text on the demo phone.
@@ -81,7 +81,7 @@ app.delete('/api/inventory/:name', async (req, res) => {
   res.status(204).end();
 });
 
-// Orders from the Off the Rock sample store, shown on the dashboard's My orders page.
+// Orders from the Off the Hook sample store, shown on the dashboard's My orders page.
 app.get('/api/shop-orders', async (req, res) => res.json(await shopOrders.list()));
 app.post('/api/shop-orders', async (req, res) => {
   const { order, error } = await shopOrders.create(req.body);
@@ -109,7 +109,7 @@ app.get('/label/:id', async (req, res) => {
   const o = (await shopOrders.list()).find((x) => x.id.toLowerCase() === req.params.id.toLowerCase());
   if (!o) return res.status(404).send('Order not found');
   const esc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
-  res.type('html').send(`<!doctype html><title>Label ${esc(o.id)}</title><style>body{font-family:system-ui,sans-serif;margin:0;padding:24px}.l{border:3px solid #000;padding:20px;width:4in}h1{margin:0 0 4px;font-size:14px;letter-spacing:.1em}.to{font-size:22px;font-weight:700;margin:18px 0 4px}.m{font-size:14px;margin:2px 0}.f{border-top:2px dashed #000;margin-top:16px;padding-top:10px;font-size:13px}@media print{button{display:none}}</style><div class="l"><h1>PERISHABLE - KEEP FROZEN</h1><p class="m">From: Off the Rock, Kodiak, AK</p><p class="to">${esc(o.name)}</p><p class="m">${esc(o.email)}</p><p class="m">[Street address, city, state ZIP]</p><div class="f">Order ${esc(o.id)}<br>${esc(o.lbs)} lb ${esc(o.item)}</div></div><p><button onclick="print()">Print label</button></p>`);
+  res.type('html').send(`<!doctype html><title>Label ${esc(o.id)}</title><style>body{font-family:system-ui,sans-serif;margin:0;padding:24px}.l{border:3px solid #000;padding:20px;width:4in}h1{margin:0 0 4px;font-size:14px;letter-spacing:.1em}.to{font-size:22px;font-weight:700;margin:18px 0 4px}.m{font-size:14px;margin:2px 0}.f{border-top:2px dashed #000;margin-top:16px;padding-top:10px;font-size:13px}@media print{button{display:none}}</style><div class="l"><h1>PERISHABLE - KEEP FROZEN</h1><p class="m">From: Off the Hook, Kodiak, AK</p><p class="to">${esc(o.name)}</p><p class="m">${esc(o.email)}</p><p class="m">[Street address, city, state ZIP]</p><div class="f">Order ${esc(o.id)}<br>${esc(o.lbs)} lb ${esc(o.item)}</div></div><p><button onclick="print()">Print label</button></p>`);
 });
 app.patch('/api/shop-orders/:id', async (req, res) => {
   const { order, error } = await shopOrders.setStatus(req.params.id, req.body?.status);

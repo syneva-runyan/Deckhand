@@ -53,7 +53,7 @@ async function subscribe() {
 
 // Sample posts, standing in for a live social feed.
 const feed = [
-  { img: '/media/salmon.webp', alt: 'Fresh salmon', text: 'Fresh off the Rock. Pulled this morning, frozen by noon.', when: 'Mon' },
+  { img: '/media/salmon.webp', alt: 'Fresh salmon', text: 'Fresh off the Hook. Pulled this morning, frozen by noon.', when: 'Mon' },
   { img: '/media/boat.webp', alt: 'Boat on the water', text: 'Another early start out of Kodiak.', when: 'Wed' },
   { img: '/media/fish.webp', alt: 'Salmon on the line', text: 'Caught on the Rock, shipped to your door.', when: 'Fri' },
 ];
@@ -66,7 +66,7 @@ const looks = [
   { match: /king|chinook/i, img: 'https://commons.wikimedia.org/wiki/Special:FilePath/Halibut_and_salmon_fillets.jpg?width=600', note: 'Skin-on, vacuum sealed, flash frozen' },
   { match: /salmon|coho|pink|chum/i, img: '/media/salmon.webp', note: 'Wild Alaskan salmon, flash frozen' },
 ];
-const fallbackLook = { img: '/media/fish.webp', note: 'Fresh off the Rock, flash frozen' };
+const fallbackLook = { img: '/media/fish.webp', note: 'Fresh off the Hook, flash frozen' };
 const inventory = ref([]);
 const loaded = ref(false);
 // Every item on the dock, in stock or not. Out-of-stock items stay listed but grayed out.
@@ -218,7 +218,7 @@ onBeforeUnmount(() => {
     <p class="ex__banner">Sample storefront. This is what Deckhand builds for you. <a href="/">Back to Deckhand</a></p>
 
     <header class="ex__hero">
-      <svg class="ex__can" viewBox="0 0 220 240" role="img" aria-label="Off the Rock wild salmon can">
+      <svg class="ex__can" viewBox="0 0 220 240" role="img" aria-label="Off the Hook wild salmon can">
         <g>
           <ellipse cx="110" cy="214" rx="92" ry="15" fill="#b4533f" />
           <path d="M18 48 C16 100 17 160 18 212 C60 232 160 232 202 212 C203 160 204 100 202 48 Z" fill="url(#can-red)" />
@@ -233,10 +233,10 @@ onBeforeUnmount(() => {
           </g>
         </g>
         <text x="110" y="122" text-anchor="middle" font-family="Pacifico, 'Segoe Script', 'Brush Script MT', cursive" font-size="13" fill="#2f5d5b">Wild Alaskan</text>
-        <text x="110" y="174" text-anchor="middle" font-family="Pacifico, 'Segoe Script', 'Brush Script MT', cursive" font-size="15" fill="#b4533f">Off the Rock</text>
+        <text x="110" y="174" text-anchor="middle" font-family="Pacifico, 'Segoe Script', 'Brush Script MT', cursive" font-size="15" fill="#b4533f">Off the Hook</text>
         <text x="110" y="206" text-anchor="middle" font-family="Lora, Georgia, serif" font-size="7.5" letter-spacing="1.8" fill="#fbf1d8">KODIAK  &#9733;  PACKED BY HAND</text>
       </svg>
-      <h1>Off the Rock</h1>
+      <h1>Off the Hook</h1>
       <p>These guys would look good on your table.</p>
       <a class="ex__cta" href="#catch" @click="tab = 'shop'">See this week's catch</a>
     </header>
@@ -306,7 +306,7 @@ onBeforeUnmount(() => {
     <CheckoutModal v-if="buying" :product="buying" @close="buying = null" @paid="onPaid" />
 
     <footer class="ex__foot">
-      <p>Off the Rock</p>
+      <p>Off the Hook</p>
     </footer>
 
     <svg class="ex__paper" aria-hidden="true"><rect width="100%" height="100%" filter="url(#paper)" /></svg>

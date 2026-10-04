@@ -1107,3 +1107,27 @@ html { scroll-behavior: smooth; }
 .dash__main .boat__check { display: flex !important; grid-template-columns: none; align-items: center; gap: 0.5rem; }
 .dash__main .boat__err { color: #a33; margin: 0; }
 .dash__main .boat__btn { justify-self: start; padding: 0.6rem 1.3rem; border: 0; border-radius: 999px; background: #0f204b; color: #fff; cursor: pointer; font: inherit; }
+
+/* ---------- mobile ---------- */
+html, body { max-width: 100%; overflow-x: hidden; }
+.landing { grid-template-columns: minmax(0, 1fr); }
+.landing__hero, .landing__band { box-sizing: border-box; min-width: 0; }
+.landing h1, .landing p { overflow-wrap: anywhere; }
+@media (max-width: 700px) {
+  .dash { grid-template-columns: minmax(0, 1fr); }
+  .dash__rail { padding: 0.75rem 1rem; gap: 0.5rem; }
+  .dash__rail nav { gap: 0.25rem; }
+  .dash__rail nav a { padding: 0.5rem 0.75rem; font-size: 1rem; }
+  .dash__main { padding: 1.25rem 1rem 2rem; min-width: 0; }
+  .dash__main p, .dash__main li, .dash__main h1, .dash__main h2 { overflow-wrap: anywhere; }
+  .dash__main textarea, .dash__main input, .dash__main select { max-width: 100%; box-sizing: border-box; }
+  .brand__card { padding: 1.1rem; }
+  .dash__empty { padding: 1.5rem 1rem; }
+}
+.brand__chat, .chat__log, .chat__form, .chat__answer, .brand__card { min-width: 0; box-sizing: border-box; }
+.brand__chat { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 480px) {
+  .chat__form { flex-wrap: wrap; }
+  .chat__form button { width: 100%; }
+  .chat__msg { max-width: 100%; }
+}

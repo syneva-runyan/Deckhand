@@ -1,0 +1,14 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<title>Deckhand icon</title>
+<rect width="64" height="64" rx="12" fill="#0f204b"/>
+<svg x="4" y="10" width="56" height="46" viewBox="14 52 192 150">
+<path d="M176 56 L180 68 L192 72 L180 76 L176 88 L172 76 L160 72 L172 68 Z" fill="#ffb612"/>
+<g transform="translate(0 34)">
+<path d="M52 78 Q118 6 196 78 Q118 150 52 78 Z" fill="#ffffff"/>
+<path d="M64 78 L22 46 L36 78 L22 110 Z" fill="#ffffff"/>
+<circle cx="166" cy="70" r="7" fill="#0f204b"/>
+<path d="M22 106 L30 104 L58 153 L50 157 Z" fill="#ffb612"/>
+<g transform="translate(70 148) rotate(-20)">
+<path d="M-28 -6 L-18 -17 L28 -17 L28 17 L-18 17 L-28 6 Z" fill="#ffb612"/>
+<circle cx="-16" cy="0" r="4.5" fill="#0f204b"/>
+</g></g></svg></svg>

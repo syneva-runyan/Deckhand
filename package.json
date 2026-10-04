@@ -1,0 +1,25 @@
+{
+  "name": "deckhand",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deckhand startup weekend prototype: a site builder and catch tracker for fishermen's collectives selling direct.",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,yellow \"node --watch server/index.js\" \"vite --config client/vite.config.js\"",
+    "build": "vite build --config client/vite.config.js",
+    "start": "node server/index.js",
+    "test": "node --test \"server/*.test.js\""
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "concurrently": "^9.1.2",
+    "vite": "^6.0.7",
+    "vue": "^3.5.13"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
